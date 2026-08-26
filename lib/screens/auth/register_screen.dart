@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:harcama_takip_uygulamasi/screens/auth/register_screen.dart';
+import 'package:harcama_takip_uygulamasi/screens/auth/login_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final formKey = GlobalKey<FormState>();
+class _RegisterScreenState extends State<RegisterScreen> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController againPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -25,17 +27,29 @@ class _LoginScreenState extends State<LoginScreen> {
               TextFormField(
                 validator: (value) {
                   if (value == null || value.isEmpty) {
+                    return 'Ad-Soyad boş olamaz';
+                  }
+                  return null;
+                },
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'Ad-Soyad'),
+              ),
+              SizedBox(height: 16),
+
+              TextFormField(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
                     return 'Bu alan boş olamaz';
                   } else if (!value.contains('@')) {
                     return 'Geçersiz e-posta girdiniz';
                   }
                   return null;
                 },
-
                 controller: emailController,
                 decoration: InputDecoration(labelText: 'E-posta'),
               ),
               SizedBox(height: 16),
+
               TextFormField(
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -45,32 +59,41 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
                   return null;
                 },
-
+                obscureText: true,
                 controller: passwordController,
                 decoration: InputDecoration(labelText: 'Şifre'),
+              ),
+              SizedBox(height: 16),
+
+              TextFormField(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Şifre tekrarı boş olamaz';
+                  } else if (value != passwordController.text) {
+                    return 'Şifreler eşleşmiyor';
+                  }
+                  return null;
+                },
                 obscureText: true,
+                controller: againPasswordController,
+                decoration: InputDecoration(labelText: 'Tekrar Şifre'),
               ),
               SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   if (formKey.currentState!.validate()) {
-                    print('Form geçerli!');
+                    print('Form geçerli! E-posta: ${emailController.text}');
                   }
                 },
-                child: Text('Giriş Yap'),
+                child: Text('Kayıt Ol'),
               ),
               SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RegisterScreen(),
-                    ),
-                  );
-                },
-                child: Text('Hesabın yok mu? Kayıt Ol'),
-              ),
+              IconButton(
+  onPressed: () {
+    Navigator.pop(context);
+  },
+  icon: Icon(Icons.arrow_back),
+),
             ],
           ),
         ),
@@ -80,8 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    againPasswordController.dispose();
     super.dispose();
   }
 }
