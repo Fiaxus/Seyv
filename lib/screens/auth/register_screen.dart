@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:harcama_takip_uygulamasi/screens/auth/login_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -82,18 +82,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ElevatedButton(
                 onPressed: () {
                   if (formKey.currentState!.validate()) {
-                    print('Form geçerli! E-posta: ${emailController.text}');
+                    print('Form geçerli!');
                   }
                 },
                 child: Text('Kayıt Ol'),
               ),
               SizedBox(height: 16),
               IconButton(
-  onPressed: () {
-    Navigator.pop(context);
-  },
-  icon: Icon(Icons.arrow_back),
-),
+                onPressed: () {
+                  context.go('/login');
+                },
+                icon: Icon(Icons.arrow_back),
+              ),
             ],
           ),
         ),
