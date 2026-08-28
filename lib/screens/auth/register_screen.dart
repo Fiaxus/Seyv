@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:harcama_takip_uygulamasi/widgets/app_gradient_button.dart';
+import 'package:harcama_takip_uygulamasi/widgets/app_text_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,79 +24,86 @@ class _RegisterScreenState extends State<RegisterScreen> {
         padding: EdgeInsets.all(24),
         child: Form(
           key: formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ad-Soyad boş olamaz';
-                  }
-                  return null;
-                },
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'Ad-Soyad'),
-              ),
-              SizedBox(height: 16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
 
-              TextFormField(
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Bu alan boş olamaz';
-                  } else if (!value.contains('@')) {
-                    return 'Geçersiz e-posta girdiniz';
-                  }
-                  return null;
-                },
-                controller: emailController,
-                decoration: InputDecoration(labelText: 'E-posta'),
-              ),
-              SizedBox(height: 16),
+              children: [
+                IconButton(
+                  onPressed: () {
+                    context.go('/login');
+                  },
+                  icon: Icon(Icons.arrow_back),
+                ),
+                AppTextField(
+                  label: 'Ad-Soyad',
+                  controller: nameController,
+                  icon: Icons.person_outline,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ad-Soyad boş olamaz';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                AppTextField(
+                  label: 'E-posta',
+                  controller: emailController,
+                  icon: Icons.mail_outline,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bu alan boş olamaz';
+                    } else if (!value.contains('@')) {
+                      return 'Geçersiz e-posta girdiniz';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
 
-              TextFormField(
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Şifre boş olamaz';
-                  } else if (value.length < 6) {
-                    return 'Şifreniz en az 6 karakter uzunluğunda olmalıdır';
-                  }
-                  return null;
-                },
-                obscureText: true,
-                controller: passwordController,
-                decoration: InputDecoration(labelText: 'Şifre'),
-              ),
-              SizedBox(height: 16),
+                AppTextField(
+                  label: 'Şifre',
+                  controller: passwordController,
+                  icon: Icons.visibility_outlined,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Şifre boş olamaz';
+                    } else if (value.length < 6) {
+                      return 'Şifreniz en az 6 karakter uzunluğunda olmalıdır';
+                    }
+                    return null;
+                  },
+                  obscureText: true,
+                ),
+                SizedBox(height: 16),
 
-              TextFormField(
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Şifre tekrarı boş olamaz';
-                  } else if (value != passwordController.text) {
-                    return 'Şifreler eşleşmiyor';
-                  }
-                  return null;
-                },
-                obscureText: true,
-                controller: againPasswordController,
-                decoration: InputDecoration(labelText: 'Tekrar Şifre'),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    print('Form geçerli!');
-                  }
-                },
-                child: Text('Kayıt Ol'),
-              ),
-              SizedBox(height: 16),
-              IconButton(
-                onPressed: () {
-                  context.go('/login');
-                },
-                icon: Icon(Icons.arrow_back),
-              ),
-            ],
+                AppTextField(
+                  label: 'Tekrar Şifre',
+                  controller: againPasswordController,
+                  icon: Icons.visibility_outlined,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Şifre tekrarı boş olamaz';
+                    } else if (value != passwordController.text) {
+                      return 'Şifreler eşleşmiyor';
+                    }
+                    return null;
+                  },
+                  obscureText: true,
+                ),
+                SizedBox(height: 16),
+                AppGradientButton(
+                  label: 'Kayıt Ol',
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      print('Form geçerli!');
+                    }
+                  },
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
