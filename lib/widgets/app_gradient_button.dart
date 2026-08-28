@@ -19,7 +19,7 @@ class AppGradientButton extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               Theme.of(context).colorScheme.primary,
-              const Color(0xFF4FE3C1),
+              Theme.of(context).colorScheme.tertiary,
             ],
           ),
           borderRadius: BorderRadius.circular(30),

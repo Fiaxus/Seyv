@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.all(24),
+        padding: EdgeInsets.all(30),
         child: Form(
           key: formKey,
           child: SingleChildScrollView(
@@ -88,15 +88,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: const Text(
                       'Şifremi unuttum',
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 16),
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
                 AppGradientButton(
                   label: 'Giriş Yap',
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
-                      print('Form Geçerli!');
+                      debugPrint('Form Geçerli!');
                     }
                   },
                 ),
@@ -131,19 +132,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       // Google ile giriş ekle
                     },
-                    icon: const Icon(Icons.g_mobiledata, size: 40),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadiusGeometry.circular(30),
+                      ),
+                    ),
                     label: const Text(
                       'Google ile devam et',
                       style: TextStyle(fontSize: 20),
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    context.go('/register');
-                  },
-                  child: Text('Hesabın yok mu? Kayıt Ol'),
+                SizedBox(height: 40),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      context.go('/register');
+                    },
+                    child: Text(
+                      'Hesabın yok mu? Kayıt Ol',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ],
             ),
