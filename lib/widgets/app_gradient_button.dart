@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class AppGradientButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
+  final double? fontSize;
 
   const AppGradientButton({
     super.key,
     required this.label,
     required this.onPressed,
+    this.fontSize,
   });
 
   @override
@@ -34,10 +36,10 @@ class AppGradientButton extends StatelessWidget {
               child: Center(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: fontSize ?? 16,
                   ),
                 ),
               ),

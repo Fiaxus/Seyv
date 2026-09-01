@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Tekrar hoş geldin',
                   style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w800, fontSize: 26),
+                      ?.copyWith(fontWeight: FontWeight.w900, fontSize: 26),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 AppTextField(
                   label: 'E-posta',
                   controller: emailController,
-                  icon: Icons.mail_outline,
+                  icon: LucideIcons.mail,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Bu alan boş olamaz';
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 AppTextField(
                   label: 'Şifre',
                   controller: passwordController,
-                  icon: Icons.visibility_outlined,
+                  icon: LucideIcons.eye,
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -95,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 AppGradientButton(
                   label: 'Giriş Yap',
+                  fontSize: 20,
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
                       debugPrint('Form Geçerli!');
@@ -141,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     label: const Text(
                       'Google ile devam et',
-                      style: TextStyle(fontSize: 20),
+                      style: TextStyle(fontSize: 24),
                     ),
                   ),
                 ),

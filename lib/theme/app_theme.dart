@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+//import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static final lightColorScheme = ColorScheme.light(
@@ -27,6 +28,7 @@ class AppTheme {
     colorScheme: lightColorScheme,
     scaffoldBackgroundColor: const Color(0xFFF7FAF8),
     useMaterial3: true,
+    //textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.light().textTheme,),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: lightColorScheme.surface.withValues(alpha: 0.6),
@@ -42,6 +44,7 @@ class AppTheme {
     colorScheme: darkColorScheme,
     scaffoldBackgroundColor: const Color(0xFF12181E),
     useMaterial3: true,
+    //textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: darkColorScheme.surface.withValues(alpha: 0.6),
