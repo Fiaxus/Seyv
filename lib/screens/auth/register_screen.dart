@@ -182,6 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 40),
                       AppGradientButton(
                         label: 'Kayıt Ol',
+                        fontSize: 20,
                         onPressed: () {
                           if (formKey.currentState!.validate()) {
                             context.read<AuthCubit>().signUp(

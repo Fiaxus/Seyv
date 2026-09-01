@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:harcama_takip_uygulamasi/blocs/auth/auth_cubit.dart';
+import 'package:harcama_takip_uygulamasi/blocs/auth/auth_state.dart';
 import 'package:harcama_takip_uygulamasi/widgets/app_gradient_button.dart';
 import 'package:harcama_takip_uygulamasi/widgets/app_text_field.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -18,151 +21,172 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.all(30),
-        child: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 40),
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  child: const Icon(LucideIcons.wallet, color: Colors.white),
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  'Tekrar hoş geldin',
-                  style: Theme.of(context).textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w900, fontSize: 26),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Bütçeni takip etmeye kaldığın yerden devam et.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface
-                        .withValues(alpha: 0.6),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                AppTextField(
-                  label: 'E-posta',
-                  controller: emailController,
-                  icon: LucideIcons.mail,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Bu alan boş olamaz';
-                    } else if (!value.contains('@')) {
-                      return 'Geçersiz e-posta girdiniz';
-                    }
-                    return null;
-                  },
-                ),
+    return BlocConsumer<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthSuccess) {
+          context.go('/home');
+        } else if (state is AuthError) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
 
-                const SizedBox(height: 16),
-
-                AppTextField(
-                  label: 'Şifre',
-                  controller: passwordController,
-                  icon: LucideIcons.eye,
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Şifre boş olamaz';
-                    } else if (value.length < 6) {
-                      return 'Şifreniz en az 6 karakter uzunluğunda olmalıdır';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      //şifre sıfırlama
-                    },
-                    child: const Text(
-                      'Şifremi unuttum',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                AppGradientButton(
-                  label: 'Giriş Yap',
-                  fontSize: 20,
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      debugPrint('Form Geçerli!');
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-                Row(
+      builder: (context, state) {
+        return Scaffold(
+          body: Padding(
+            padding: EdgeInsets.all(30),
+            child: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Divider(
-                        color: Theme.of(context).colorScheme.onSurface
-                            .withValues(alpha: 0.2),
+                    SizedBox(height: 40),
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      child: const Icon(
+                        LucideIcons.wallet,
+                        color: Colors.white,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        'veya',
-                        style: Theme.of(context).textTheme.bodySmall,
+                    const SizedBox(height: 28),
+                    Text(
+                      'Tekrar hoş geldin',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900, fontSize: 26),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Bütçeni takip etmeye kaldığın yerden devam et.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface
+                            .withValues(alpha: 0.6),
+                        fontSize: 16,
                       ),
                     ),
-                    Expanded(
-                      child: Divider(
-                        color: Theme.of(context).colorScheme.onSurface
-                            .withValues(alpha: 0.2),
+                    const SizedBox(height: 32),
+                    AppTextField(
+                      label: 'E-posta',
+                      controller: emailController,
+                      icon: LucideIcons.mail,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Bu alan boş olamaz';
+                        } else if (!value.contains('@')) {
+                          return 'Geçersiz e-posta girdiniz';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    AppTextField(
+                      label: 'Şifre',
+                      controller: passwordController,
+                      icon: LucideIcons.eye,
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Şifre boş olamaz';
+                        } else if (value.length < 6) {
+                          return 'Şifreniz en az 6 karakter uzunluğunda olmalıdır';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          //şifre sıfırlama
+                        },
+                        child: const Text(
+                          'Şifremi unuttum',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    AppGradientButton(
+                      label: 'Giriş Yap',
+                      fontSize: 20,
+                      onPressed: () {
+                        if (formKey.currentState!.validate()) {
+                          context.read<AuthCubit>().signIn(
+                            email: emailController.text,
+                            password: passwordController.text,
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withValues(alpha: 0.2),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            'veya',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withValues(alpha: 0.2),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          // Google ile giriş ekle
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          foregroundColor: Theme.of(context)
+                              .colorScheme
+                              .onSurface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text(
+                          'Google ile devam et',
+                          style: TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          context.go('/register');
+                        },
+                        child: Text(
+                          'Hesabın yok mu? Kayıt Ol',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Google ile giriş ekle
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      foregroundColor: Theme.of(context).colorScheme.onSurface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadiusGeometry.circular(30),
-                      ),
-                    ),
-                    label: const Text(
-                      'Google ile devam et',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 40),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      context.go('/register');
-                    },
-                    child: Text(
-                      'Hesabın yok mu? Kayıt Ol',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
