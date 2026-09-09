@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 
 import '../models/category_data.dart';
 import '../widgets/category_card.dart';
+import '../widgets/transaction_tile.dart';
+import '../models/transaction_data.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
 
   final userName = 'Berkay';
   final userInitials = 'NB';
@@ -13,20 +15,40 @@ class HomeScreen extends StatelessWidget {
     CategoryData(
       icon: Icons.shopping_cart_outlined,
       categoryName: 'Market',
-      amount: '3.250 ₺',
+      amount: 3250,
       accentColor: Color(0xFF08A88A),
     ),
     CategoryData(
       icon: Icons.restaurant_outlined,
       categoryName: 'Yemek',
-      amount: '2.400 ₺',
+      amount: 2400,
       accentColor: Color(0xFFE0912F),
     ),
     CategoryData(
       icon: Icons.receipt_long_outlined,
       categoryName: 'Fatura',
-      amount: '3.500 ₺',
+      amount: 3500,
       accentColor: Color(0xFF9B7FE0),
+    ),
+  ];
+  final List<TransactionData> mockTransactions = [
+    TransactionData(
+      icon: Icons.restaurant_outlined,
+      categoryName: 'Yemek',
+      description: 'Öğle yemeği',
+      location: 'Ofis',
+      date: DateTime(2026, 8, 24),
+      amount: 285.00,
+      accentColor: Color(0xFFE0912F),
+    ),
+    TransactionData(
+      icon: Icons.shopping_cart_outlined,
+      categoryName: 'Market',
+      description: 'Haftalık alışveriş',
+      location: 'Migros',
+      date: DateTime(2026, 8, 23),
+      amount: 1240.50,
+      accentColor: Color(0xFF08A88A),
     ),
   ];
 
@@ -239,16 +261,40 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 12),
                       child: SizedBox(
                         width: 110,
-                        child: CategoryCard(
-                          icon: data.icon,
-                          categoryName: data.categoryName,
-                          amount: data.amount,
-                          accentColor: data.accentColor,
-                        ),
+                        child: CategoryCard(category: data),
                       ),
                     );
                   },
                 ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Son Harcamalar',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Text(
+                    'Tümü',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: mockTransactions.length,
+                itemBuilder: (context, index) {
+                  final data = mockTransactions[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: TransactionTile(transaction: data),
+                  );
+                },
               ),
             ],
           ),
