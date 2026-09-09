@@ -12,7 +12,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
+  final List<Widget> _screens = [
     HomeScreen(),
     Center(child: Text('Harcama Ekranı (yakında)')),
     Center(child: Text('İstatistik Ekranı (yakında)')),

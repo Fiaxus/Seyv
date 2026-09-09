@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 
-class CategoryCard extends StatelessWidget {
-  final IconData icon;
-  final String categoryName;
-  final String amount;
-  final Color accentColor;
+import '../models/category_data.dart';
+import 'package:intl/intl.dart';
 
-  const CategoryCard({
-    super.key,
-    required this.icon,
-    required this.categoryName,
-    required this.amount,
-    required this.accentColor,
-  });
+class CategoryCard extends StatelessWidget {
+  final CategoryData category;
+
+  const CategoryCard({super.key, required this.category});
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +24,14 @@ class CategoryCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
+              color: category.accentColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: accentColor, size: 20),
+            child: Icon(category.icon, color: category.accentColor, size: 20),
           ),
-
           const SizedBox(height: 10),
           Text(
-            categoryName,
+            category.categoryName,
             style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -46,7 +39,10 @@ class CategoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            amount,
+            NumberFormat.currency(
+              locale: 'tr_TR',
+              symbol: '₺',
+            ).format(category.amount),
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
@@ -54,7 +50,7 @@ class CategoryCard extends StatelessWidget {
             width: double.infinity,
             height: 4,
             decoration: BoxDecoration(
-              color: accentColor,
+              color: category.accentColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
