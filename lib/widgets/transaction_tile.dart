@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../models/transaction_data.dart';
 
-import 'package:intl/intl.dart';
-
 class TransactionTile extends StatelessWidget {
   final TransactionData transaction;
 

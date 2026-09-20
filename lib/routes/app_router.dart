@@ -3,7 +3,7 @@ import 'package:harcama_takip_uygulamasi/screens/auth/login_screen.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/register_screen.dart';
 
 import '../screens/main_shell.dart';
-
+import '../screens/expense_add_screen.dart';
 import '../screens/splash_screen.dart';
 
 final router = GoRouter(
@@ -16,5 +16,9 @@ final router = GoRouter(
     ),
     GoRoute(path: '/home', builder: (context, state) => const MainShell()),
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+    GoRoute(
+      path: '/expense-add',
+      builder: (context, state) => const ExpenseAddScreen(),
+    ),
   ],
 );

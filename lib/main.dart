@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'blocs/auth/auth_cubit.dart';
+import 'blocs/expense/expense_cubit.dart';
+import 'blocs/budget/budget_cubit.dart';
 
 import 'routes/app_router.dart';
 import 'theme/app_theme.dart';
@@ -21,8 +23,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => AuthCubit()),
+        BlocProvider(create: (context) => ExpenseCubit()),
+        BlocProvider(create: (context) => BudgetCubit()),
+      ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'Harcama Takip Uygulaması',

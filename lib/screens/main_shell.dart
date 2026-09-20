@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'home_screen.dart';
+import 'expense_list_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -14,7 +17,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    Center(child: Text('Harcama Ekranı (yakında)')),
+    ExpenseListScreen(),
     Center(child: Text('İstatistik Ekranı (yakında)')),
     Center(child: Text('Profil Ekranı (yakında)')),
   ];
@@ -23,6 +26,13 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/expense-add'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {

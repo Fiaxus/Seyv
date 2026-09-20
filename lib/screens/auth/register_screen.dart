@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:harcama_takip_uygulamasi/widgets/app_gradient_button.dart';
 import 'package:harcama_takip_uygulamasi/widgets/app_text_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../blocs/auth/auth_cubit.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../repositories/user_repository.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,6 +29,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthSuccess) {
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          if (userId != null) {
+            UserRepository().setName(userId, nameController.text);
+          }
           context.go('/home');
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context)
