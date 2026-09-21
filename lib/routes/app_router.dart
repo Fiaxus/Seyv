@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/login_screen.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/register_screen.dart';
 
+import '../screens/exchange_rates_screen.dart';
 import '../screens/main_shell.dart';
 import '../screens/expense_add_screen.dart';
 import '../screens/category_detail_screen.dart';
@@ -26,6 +27,10 @@ final router = GoRouter(
       builder: (context, state) => CategoryDetailScreen(
         categoryName: state.pathParameters['categoryName']!,
       ),
+    ),
+    GoRoute(
+      path: '/exchange-rates',
+      builder: (context, state) => const ExchangeRatesScreen(),
     ),
   ],
 );

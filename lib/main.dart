@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'blocs/auth/auth_cubit.dart';
 import 'blocs/expense/expense_cubit.dart';
+import 'blocs/exchange_rate/exchange_rate_cubit.dart';
 import 'blocs/budget/budget_cubit.dart';
 
 import 'routes/app_router.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => AuthCubit()),
         BlocProvider(create: (context) => ExpenseCubit()),
         BlocProvider(create: (context) => BudgetCubit()),
+        BlocProvider(create: (context) => ExchangeRateCubit()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

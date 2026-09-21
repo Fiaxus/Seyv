@@ -180,9 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     totalCount = state.expenses.length;
                     final months = <String>{};
                     for (final expense in state.expenses) {
-                      months.add(
-                        '${expense.date.year}-${expense.date.month}',
-                      );
+                      months.add('${expense.date.year}-${expense.date.month}');
                     }
                     activeMonths = months.length;
                   }
@@ -235,6 +233,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () => _editBudget(context),
                   );
                 },
+              ),
+              _SettingsTile(
+                icon: Icons.currency_exchange,
+                label: 'Döviz Kurları',
+                onTap: () => context.push('/exchange-rates'),
               ),
               _SettingsTile(
                 icon: Icons.dark_mode_outlined,
@@ -337,9 +340,7 @@ class _SettingsTile extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(label, style: const TextStyle(fontSize: 14)),
-            ),
+            Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
             if (trailing != null)
               Text(
                 trailing!,
