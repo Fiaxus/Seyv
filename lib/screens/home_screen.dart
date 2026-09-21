@@ -10,6 +10,7 @@ import '../blocs/budget/budget_cubit.dart';
 import '../blocs/budget/budget_state.dart';
 import '../models/category_data.dart';
 import '../models/transaction_data.dart';
+import '../repositories/user_repository.dart';
 import '../utils/category_style.dart';
 import '../widgets/category_card.dart';
 import '../widgets/transaction_tile.dart';
@@ -22,13 +23,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final userName = 'Berkay';
-  final userInitials = 'NB';
+  late final Future<String?> _nameFuture;
 
   @override
   void initState() {
     super.initState();
     final userId = FirebaseAuth.instance.currentUser?.uid;
+    _nameFuture = userId != null
+        ? UserRepository().getName(userId)
+        : Future.value(null);
+
     if (userId != null) {
       context.read<ExpenseCubit>().loadExpenses(userId);
       context.read<BudgetCubit>().loadBudget(userId);
@@ -122,59 +126,73 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 22,
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .primary,
-                            child: Text(
-                              userInitials,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      FutureBuilder<String?>(
+                        future: _nameFuture,
+                        builder: (context, snapshot) {
+                          final name = snapshot.data ?? '';
+                          final initials = name.trim().isNotEmpty
+                              ? name.trim()[0].toUpperCase()
+                              : '?';
+
+                          return Row(
                             children: [
-                              Text(
-                                getGreeting(),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.5),
-                                    ),
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              Text(
-                                userName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    getGreeting(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                  ),
+                                  Text(
+                                    name.isEmpty ? 'Kullanıcı' : name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.notifications_outlined,
+                                  size: 20,
                                 ),
                               ),
                             ],
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.notifications_outlined,
-                              size: 20,
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 24),
                       Container(
@@ -213,7 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: Colors.white.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -268,9 +288,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
+                                valueColor:
+                                    const AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                               ),
                             ),
                           ],
