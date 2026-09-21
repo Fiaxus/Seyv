@@ -174,7 +174,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   const SizedBox(height: 12),
                   Expanded(
                     child: sorted.isEmpty
-                        ? const Center(child: Text('Bu kategoride harcama yok.'))
+                        ? const Center(
+                            child: Text('Bu kategoride harcama yok.'),
+                          )
                         : ListView.builder(
                             itemCount: sorted.length,
                             itemBuilder: (context, index) {
@@ -190,7 +192,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                               );
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
-                                child: TransactionTile(transaction: data),
+                                child: TransactionTile(
+                                  transaction: data,
+                                  onTap: () {
+                                    context.push(
+                                      '/expense-add',
+                                      extra: expense,
+                                    );
+                                  },
+                                ),
                               );
                             },
                           ),

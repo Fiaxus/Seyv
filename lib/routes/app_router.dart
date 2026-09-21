@@ -2,10 +2,11 @@ import 'package:go_router/go_router.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/login_screen.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/register_screen.dart';
 
-import '../screens/exchange_rates_screen.dart';
+import '../models/expense.dart';
 import '../screens/main_shell.dart';
 import '../screens/expense_add_screen.dart';
 import '../screens/category_detail_screen.dart';
+import '../screens/exchange_rates_screen.dart';
 import '../screens/splash_screen.dart';
 
 final router = GoRouter(
@@ -20,7 +21,9 @@ final router = GoRouter(
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/expense-add',
-      builder: (context, state) => const ExpenseAddScreen(),
+      builder: (context, state) => ExpenseAddScreen(
+        existingExpense: state.extra as Expense?,
+      ),
     ),
     GoRoute(
       path: '/category-detail/:categoryName',

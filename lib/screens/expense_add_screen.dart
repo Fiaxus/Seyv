@@ -17,16 +17,16 @@ class _CategoryOption {
 }
 
 class ExpenseAddScreen extends StatefulWidget {
-  const ExpenseAddScreen({super.key});
+  final Expense? existingExpense;
+
+  const ExpenseAddScreen({super.key, this.existingExpense});
 
   @override
   State<ExpenseAddScreen> createState() => _ExpenseAddScreenState();
 }
 
 class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
-  final TextEditingController _amountController = TextEditingController(
-    text: '0',
-  );
+  final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   String _selectedCurrency = 'TRY';
@@ -45,6 +45,27 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     _CategoryOption(Icons.more_horiz, 'Diğer', Color(0xFF8A8A8A)),
   ];
 
+  bool get _isEditing => widget.existingExpense != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existingExpense;
+    if (existing != null) {
+      _amountController.text = existing.amount
+          .toStringAsFixed(2)
+          .replaceAll('.', ',');
+      _descriptionController.text = existing.description;
+      _selectedDate = existing.date;
+      final index = _categories.indexWhere(
+        (c) => c.label == existing.categoryName,
+      );
+      _selectedCategoryIndex = index != -1 ? index : 0;
+    } else {
+      _amountController.text = '0';
+    }
+  }
+
   @override
   void dispose() {
     _amountController.dispose();
@@ -57,7 +78,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      lastDate: DateTime.now(),
     );
     if (picked != null) {
       setState(() {
@@ -76,16 +97,21 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     final selectedCategory = _categories[_selectedCategoryIndex];
 
     final expense = Expense(
-      id: '',
+      id: widget.existingExpense?.id ?? '',
       userId: userId,
       categoryName: selectedCategory.label,
       description: _descriptionController.text,
-      location: '',
+      location: widget.existingExpense?.location ?? '',
       date: _selectedDate,
       amount: amount,
     );
 
-    await context.read<ExpenseCubit>().addExpense(expense);
+    final cubit = context.read<ExpenseCubit>();
+    if (_isEditing) {
+      await cubit.updateExpense(expense);
+    } else {
+      await cubit.addExpense(expense);
+    }
 
     if (context.mounted) {
       context.pop();
@@ -121,15 +147,15 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Harcama Ekle',
-                        style: TextStyle(
+                      Text(
+                        _isEditing ? 'Harcama Düzenle' : 'Harcama Ekle',
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
                       ),
                       Text(
-                        'Yeni kayıt oluştur',
+                        _isEditing ? 'Kaydı güncelle' : 'Yeni kayıt oluştur',
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant,
@@ -183,8 +209,8 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
+                        color: colorScheme.onSurface.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       child: Row(
                         children: ['TRY', 'USD', 'EUR'].map((currency) {
@@ -196,21 +222,31 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                                   _selectedCurrency = currency;
                                 });
                               },
-                              child: Container(
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? colorScheme.surface
+                                      ? colorScheme.primary.withValues(
+                                          alpha: 0.12,
+                                        )
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? colorScheme.primary
+                                        : Colors.transparent,
+                                    width: 1.2,
+                                  ),
                                 ),
                                 child: Text(
                                   currency,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
                                     color: isSelected
                                         ? colorScheme.primary
                                         : colorScheme.onSurfaceVariant,
@@ -348,9 +384,9 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Kaydet butonu
+              // Kaydet / Güncelle butonu
               AppGradientButton(
-                label: 'Kaydet',
+                label: _isEditing ? 'Güncelle' : 'Kaydet',
                 onPressed: _saveExpense,
               ),
             ],

@@ -9,6 +9,7 @@ import '../blocs/expense/expense_state.dart';
 import '../blocs/budget/budget_cubit.dart';
 import '../blocs/budget/budget_state.dart';
 import '../models/category_data.dart';
+import '../models/expense.dart';
 import '../models/transaction_data.dart';
 import '../repositories/user_repository.dart';
 import '../utils/category_style.dart';
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return BlocBuilder<ExpenseCubit, ExpenseState>(
               builder: (context, state) {
                 List<CategoryData> categories = [];
-                List<TransactionData> recentTransactions = [];
+                List<Expense> recentExpenses = [];
                 double totalAmount = 0;
 
                 if (state is ExpenseLoaded) {
@@ -101,18 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   }).toList();
 
                   // 3) Son harcamalar (ilk 3 tanesi, zaten tarihe göre sıralı geliyor)
-                  recentTransactions = state.expenses.take(3).map((expense) {
-                    final style = CategoryStyles.of(expense.categoryName);
-                    return TransactionData(
-                      icon: style.icon,
-                      categoryName: expense.categoryName,
-                      description: expense.description,
-                      location: expense.location,
-                      date: expense.date,
-                      amount: expense.amount,
-                      accentColor: style.color,
-                    );
-                  }).toList();
+                  recentExpenses = state.expenses.take(3).toList();
                 }
 
                 // Bütçe hesaplamaları
@@ -138,9 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 22,
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primary,
                                 child: Text(
                                   initials,
                                   style: const TextStyle(
@@ -155,9 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     getGreeting(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
@@ -180,9 +168,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
                                   ),
                                 ),
                                 child: const Icon(
@@ -231,9 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -288,10 +274,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -364,18 +349,35 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      if (recentTransactions.isEmpty)
+                      if (recentExpenses.isEmpty)
                         const Text('Henüz harcama eklenmedi.')
                       else
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: recentTransactions.length,
+                          itemCount: recentExpenses.length,
                           itemBuilder: (context, index) {
-                            final data = recentTransactions[index];
+                            final expense = recentExpenses[index];
+                            final style = CategoryStyles.of(
+                              expense.categoryName,
+                            );
+                            final data = TransactionData(
+                              icon: style.icon,
+                              categoryName: expense.categoryName,
+                              description: expense.description,
+                              location: expense.location,
+                              date: expense.date,
+                              amount: expense.amount,
+                              accentColor: style.color,
+                            );
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 10),
-                              child: TransactionTile(transaction: data),
+                              child: TransactionTile(
+                                transaction: data,
+                                onTap: () {
+                                  context.push('/expense-add', extra: expense);
+                                },
+                              ),
                             );
                           },
                         ),

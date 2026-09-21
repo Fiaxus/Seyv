@@ -34,6 +34,14 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     }
   }
 
+  Future<void> updateExpense(Expense expense) async {
+    try {
+      await _repository.updateExpense(expense);
+    } catch (e) {
+      emit(ExpenseError(e.toString()));
+    }
+  }
+
   Future<void> deleteExpense(String expenseId) async {
     try {
       await _repository.deleteExpense(expenseId);
