@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'profile_screen.dart';
+import 'statistics_screen.dart';
+
 import 'package:go_router/go_router.dart';
 
 import 'home_screen.dart';
@@ -18,8 +21,8 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = [
     HomeScreen(),
     ExpenseListScreen(),
-    Center(child: Text('İstatistik Ekranı (yakında)')),
-    Center(child: Text('Profil Ekranı (yakında)')),
+    StatisticsScreen(),
+    ProfileScreen(),
   ];
 
   @override
