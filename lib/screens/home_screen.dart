@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 
 import '../blocs/expense/expense_cubit.dart';
 import '../blocs/expense/expense_state.dart';
@@ -125,9 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           CircleAvatar(
                             radius: 22,
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primary,
                             child: Text(
                               userInitials,
                               style: const TextStyle(
@@ -212,9 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -269,10 +268,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -312,7 +310,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.only(right: 12),
                                 child: SizedBox(
                                   width: 110,
-                                  child: CategoryCard(category: data),
+                                  child: CategoryCard(
+                                    category: data,
+                                    onTap: () {
+                                      context.push(
+                                        '/category-detail/${Uri.encodeComponent(data.categoryName)}',
+                                      );
+                                    },
+                                  ),
                                 ),
                               );
                             },

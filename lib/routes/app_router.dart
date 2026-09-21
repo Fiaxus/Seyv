@@ -4,6 +4,7 @@ import 'package:harcama_takip_uygulamasi/screens/auth/register_screen.dart';
 
 import '../screens/main_shell.dart';
 import '../screens/expense_add_screen.dart';
+import '../screens/category_detail_screen.dart';
 import '../screens/splash_screen.dart';
 
 final router = GoRouter(
@@ -19,6 +20,12 @@ final router = GoRouter(
     GoRoute(
       path: '/expense-add',
       builder: (context, state) => const ExpenseAddScreen(),
+    ),
+    GoRoute(
+      path: '/category-detail/:categoryName',
+      builder: (context, state) => CategoryDetailScreen(
+        categoryName: state.pathParameters['categoryName']!,
+      ),
     ),
   ],
 );
