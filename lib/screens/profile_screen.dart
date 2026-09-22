@@ -46,31 +46,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (userId == null) return;
 
     final controller = TextEditingController();
+    bool showError = false;
+
     final result = await showDialog<double>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Aylık Bütçe'),
-          content: TextField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(hintText: 'Örn: 20000'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Vazgeç'),
-            ),
-            TextButton(
-              onPressed: () {
-                final value = double.tryParse(
-                  controller.text.replaceAll(',', '.'),
-                );
-                Navigator.of(context).pop(value);
-              },
-              child: const Text('Kaydet'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Aylık Bütçe'),
+              content: TextField(
+                controller: controller,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Örn: 20000',
+                  errorText: showError ? 'Geçerli bir tutar girin' : null,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final value = double.tryParse(
+                      controller.text.replaceAll(',', '.'),
+                    );
+                    if (value == null || value <= 0) {
+                      setDialogState(() {
+                        showError = true;
+                      });
+                      return;
+                    }
+                    Navigator.of(context).pop(value);
+                  },
+                  child: const Text('Kaydet'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

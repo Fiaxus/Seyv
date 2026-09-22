@@ -284,10 +284,18 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           key: ValueKey(expense.id),
                           direction: DismissDirection.endToStart,
                           confirmDismiss: (_) => _confirmDelete(context),
-                          onDismissed: (_) {
-                            context.read<ExpenseCubit>().deleteExpense(
-                              expense.id,
-                            );
+                          onDismissed: (_) async {
+                            try {
+                              await context.read<ExpenseCubit>().deleteExpense(
+                                expense.id,
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Silinemedi: $e')),
+                                );
+                              }
+                            }
                           },
                           background: Container(
                             alignment: Alignment.centerRight,

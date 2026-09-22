@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'auth_state.dart';
 import '../../repositories/auth_repository.dart';
+import '../../utils/auth_error_translator.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository = AuthRepository();
@@ -14,7 +15,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _authRepository.signUp(email: email, password: password);
       emit(AuthSuccess());
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError(translateAuthError(e)));
     }
   }
 
@@ -24,7 +25,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _authRepository.signIn(email: email, password: password);
       emit(AuthSuccess());
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError(translateAuthError(e)));
     }
   }
 
@@ -34,7 +35,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _authRepository.signOut();
       emit(AuthSuccess());
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError(translateAuthError(e)));
     }
   }
 }

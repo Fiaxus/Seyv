@@ -11,8 +11,8 @@ import '../blocs/exchange_rate/exchange_rate_state.dart';
 import '../models/expense.dart';
 
 const Map<String, String> _descriptionHints = {
-  'Yemek': 'Öğle yemeği',
-  'Market': 'Haftalık alışveriş',
+  'Yemek': 'Öğle yemeği · Ofis',
+  'Market': 'Haftalık alışveriş · Migros',
   'Ulaşım': 'Metro + otobüs',
   'Fatura': 'Elektrik faturası',
   'Alışveriş': 'Spor ayakkabı',
@@ -46,6 +46,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
   String _selectedCurrency = 'TRY';
   int _selectedCategoryIndex = 0;
   DateTime _selectedDate = DateTime.now();
+  bool _isSaving = false;
 
   final List<_CategoryOption> _categories = const [
     _CategoryOption(Icons.restaurant_outlined, 'Yemek', Color(0xFFE0912F)),
@@ -111,11 +112,20 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
   }
 
   Future<void> _saveExpense() async {
+    if (_isSaving) return;
+
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
     final amountText = _amountController.text.replaceAll(',', '.');
     final enteredAmount = double.tryParse(amountText) ?? 0;
+
+    if (enteredAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen geçerli bir tutar girin.')),
+      );
+      return;
+    }
 
     double amountTRY = enteredAmount;
     double? exchangeRate;
@@ -153,14 +163,29 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     );
 
     final cubit = context.read<ExpenseCubit>();
-    if (_isEditing) {
-      await cubit.updateExpense(expense);
-    } else {
-      await cubit.addExpense(expense);
-    }
 
-    if (context.mounted) {
-      context.pop();
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      if (_isEditing) {
+        await cubit.updateExpense(expense);
+      } else {
+        await cubit.addExpense(expense);
+      }
+      if (context.mounted) {
+        context.pop();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kaydedilemedi: $e')),
+        );
+      }
     }
   }
 
@@ -468,8 +493,10 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
 
               // Kaydet / Güncelle butonu
               AppGradientButton(
-                label: _isEditing ? 'Güncelle' : 'Kaydet',
-                onPressed: _saveExpense,
+                label: _isSaving
+                    ? 'Kaydediliyor...'
+                    : (_isEditing ? 'Güncelle' : 'Kaydet'),
+                onPressed: _isSaving ? () {} : _saveExpense,
               ),
             ],
           ),
