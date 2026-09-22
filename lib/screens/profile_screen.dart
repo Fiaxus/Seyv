@@ -9,6 +9,7 @@ import '../blocs/budget/budget_cubit.dart';
 import '../blocs/budget/budget_state.dart';
 import '../blocs/expense/expense_cubit.dart';
 import '../blocs/expense/expense_state.dart';
+import '../blocs/theme/theme_cubit.dart';
 import '../repositories/user_repository.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -76,6 +77,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (result != null) {
       await context.read<BudgetCubit>().updateBudget(userId, result);
+    }
+  }
+
+  String _themeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Açık';
+      case ThemeMode.dark:
+        return 'Koyu';
+      case ThemeMode.system:
+        return 'Sistem';
+    }
+  }
+
+  Future<void> _pickTheme(BuildContext context) async {
+    final currentMode = context.read<ThemeCubit>().state;
+
+    final selected = await showModalBottomSheet<ThemeMode>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final mode in ThemeMode.values)
+                ListTile(
+                  title: Text(_themeLabel(mode)),
+                  trailing: mode == currentMode
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: () => Navigator.of(context).pop(mode),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      await context.read<ThemeCubit>().setTheme(selected);
     }
   }
 
@@ -180,7 +221,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     totalCount = state.expenses.length;
                     final months = <String>{};
                     for (final expense in state.expenses) {
-                      months.add('${expense.date.year}-${expense.date.month}');
+                      months.add(
+                        '${expense.date.year}-${expense.date.month}',
+                      );
                     }
                     activeMonths = months.length;
                   }
@@ -239,11 +282,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: 'Döviz Kurları',
                 onTap: () => context.push('/exchange-rates'),
               ),
-              _SettingsTile(
-                icon: Icons.dark_mode_outlined,
-                label: 'Tema',
-                trailing: 'Sistem',
-                onTap: () => _showComingSoon(context),
+              BlocBuilder<ThemeCubit, ThemeMode>(
+                builder: (context, mode) {
+                  return _SettingsTile(
+                    icon: Icons.dark_mode_outlined,
+                    label: 'Tema',
+                    trailing: _themeLabel(mode),
+                    onTap: () => _pickTheme(context),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
@@ -340,7 +387,9 @@ class _SettingsTile extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
             const SizedBox(width: 12),
-            Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
+            Expanded(
+              child: Text(label, style: const TextStyle(fontSize: 14)),
+            ),
             if (trailing != null)
               Text(
                 trailing!,

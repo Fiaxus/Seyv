@@ -6,8 +6,9 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'blocs/auth/auth_cubit.dart';
 import 'blocs/expense/expense_cubit.dart';
-import 'blocs/exchange_rate/exchange_rate_cubit.dart';
 import 'blocs/budget/budget_cubit.dart';
+import 'blocs/exchange_rate/exchange_rate_cubit.dart';
+import 'blocs/theme/theme_cubit.dart';
 
 import 'routes/app_router.dart';
 import 'theme/app_theme.dart';
@@ -30,16 +31,19 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => ExpenseCubit()),
         BlocProvider(create: (context) => BudgetCubit()),
         BlocProvider(create: (context) => ExchangeRateCubit()),
+        BlocProvider(create: (context) => ThemeCubit()),
       ],
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Harcama Takip Uygulaması',
-
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-
-        themeMode: ThemeMode.system,
-        routerConfig: router,
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp.router(
+            debugShowCheckedModeBanner: false,
+            title: 'Harcama Takip Uygulaması',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            routerConfig: router,
+          );
+        },
       ),
     );
   }
