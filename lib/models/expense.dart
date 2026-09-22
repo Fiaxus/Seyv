@@ -7,7 +7,10 @@ class Expense {
   final String description;
   final String location;
   final DateTime date;
-  final double amount;
+  final double amount; // Her zaman TL karşılığı
+  final String currency; // 'TRY', 'USD', 'EUR'
+  final double? exchangeRate; // Kayıt anındaki kur (TRY ise null)
+  final double? originalAmount; // Girilen orijinal tutar (TRY ise null)
 
   const Expense({
     required this.id,
@@ -17,6 +20,9 @@ class Expense {
     required this.location,
     required this.date,
     required this.amount,
+    this.currency = 'TRY',
+    this.exchangeRate,
+    this.originalAmount,
   });
 
   Map<String, dynamic> toMap() {
@@ -27,6 +33,9 @@ class Expense {
       'location': location,
       'date': Timestamp.fromDate(date),
       'amount': amount,
+      'currency': currency,
+      'exchangeRate': exchangeRate,
+      'originalAmount': originalAmount,
     };
   }
 
@@ -39,6 +48,9 @@ class Expense {
       location: map['location'] as String,
       date: (map['date'] as Timestamp).toDate(),
       amount: (map['amount'] as num).toDouble(),
+      currency: map['currency'] as String? ?? 'TRY',
+      exchangeRate: (map['exchangeRate'] as num?)?.toDouble(),
+      originalAmount: (map['originalAmount'] as num?)?.toDouble(),
     );
   }
 }

@@ -6,7 +6,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../widgets/app_gradient_button.dart';
 import '../blocs/expense/expense_cubit.dart';
+import '../blocs/exchange_rate/exchange_rate_cubit.dart';
+import '../blocs/exchange_rate/exchange_rate_state.dart';
 import '../models/expense.dart';
+
+const Map<String, String> _descriptionHints = {
+  'Yemek': 'Öğle yemeği',
+  'Market': 'Haftalık alışveriş',
+  'Ulaşım': 'Metro + otobüs',
+  'Fatura': 'Elektrik faturası',
+  'Alışveriş': 'Spor ayakkabı',
+  'Eğlence': 'Dijital abonelik',
+  'Sağlık': 'Eczane',
+  'Eğitim': 'Kurs ücreti',
+  'Diğer': 'Açıklama girin',
+};
 
 class _CategoryOption {
   final IconData icon;
@@ -50,11 +64,20 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
   @override
   void initState() {
     super.initState();
+    context.read<ExchangeRateCubit>().loadRates(['USD', 'EUR']);
+
     final existing = widget.existingExpense;
     if (existing != null) {
-      _amountController.text = existing.amount
-          .toStringAsFixed(2)
-          .replaceAll('.', ',');
+      if (existing.currency != 'TRY' && existing.originalAmount != null) {
+        _amountController.text = existing.originalAmount!
+            .toStringAsFixed(2)
+            .replaceAll('.', ',');
+        _selectedCurrency = existing.currency;
+      } else {
+        _amountController.text = existing.amount
+            .toStringAsFixed(2)
+            .replaceAll('.', ',');
+      }
       _descriptionController.text = existing.description;
       _selectedDate = existing.date;
       final index = _categories.indexWhere(
@@ -92,7 +115,27 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     if (userId == null) return;
 
     final amountText = _amountController.text.replaceAll(',', '.');
-    final amount = double.tryParse(amountText) ?? 0;
+    final enteredAmount = double.tryParse(amountText) ?? 0;
+
+    double amountTRY = enteredAmount;
+    double? exchangeRate;
+    double? originalAmount;
+
+    if (_selectedCurrency != 'TRY') {
+      final rateState = context.read<ExchangeRateCubit>().state;
+      if (rateState is! ExchangeRateLoaded ||
+          rateState.rates[_selectedCurrency] == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kur bilgisi alınamadı, tekrar deneyin.'),
+          ),
+        );
+        return;
+      }
+      exchangeRate = rateState.rates[_selectedCurrency]!;
+      originalAmount = enteredAmount;
+      amountTRY = enteredAmount * exchangeRate;
+    }
 
     final selectedCategory = _categories[_selectedCategoryIndex];
 
@@ -103,7 +146,10 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
       description: _descriptionController.text,
       location: widget.existingExpense?.location ?? '',
       date: _selectedDate,
-      amount: amount,
+      amount: amountTRY,
+      currency: _selectedCurrency,
+      exchangeRate: exchangeRate,
+      originalAmount: originalAmount,
     );
 
     final cubit = context.read<ExpenseCubit>();
@@ -203,8 +249,41 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                           isDense: true,
                           contentPadding: EdgeInsets.zero,
                         ),
+                        onChanged: (_) => setState(() {}),
                       ),
                     ),
+                    if (_selectedCurrency != 'TRY')
+                      BlocBuilder<ExchangeRateCubit, ExchangeRateState>(
+                        builder: (context, state) {
+                          if (state is! ExchangeRateLoaded) {
+                            return const Padding(
+                              padding: EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Kur bilgisi yükleniyor...',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                            );
+                          }
+                          final rate = state.rates[_selectedCurrency];
+                          if (rate == null) return const SizedBox();
+
+                          final amountText = _amountController.text
+                              .replaceAll(',', '.');
+                          final entered = double.tryParse(amountText) ?? 0;
+                          final converted = entered * rate;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '≈ ${NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(converted)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(4),
@@ -369,7 +448,10 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
               TextField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                  hintText: 'Öğle yemeği · Ofis',
+                  hintText:
+                      _descriptionHints[_categories[_selectedCategoryIndex]
+                          .label] ??
+                      'Açıklama girin',
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest,
                   contentPadding: const EdgeInsets.symmetric(

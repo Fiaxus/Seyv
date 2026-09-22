@@ -8,6 +8,8 @@ class TransactionData {
   final String location;
   final double amount;
   final Color accentColor;
+  final String? originalCurrency;
+  final double? originalAmount;
 
   const TransactionData({
     required this.icon,
@@ -17,5 +19,7 @@ class TransactionData {
     required this.location,
     required this.amount,
     required this.accentColor,
+    this.originalCurrency,
+    this.originalAmount,
   });
 }

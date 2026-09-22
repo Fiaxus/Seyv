@@ -239,9 +239,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                             e.description.toLowerCase().contains(
                               _searchQuery,
                             ) ||
-                            e.categoryName.toLowerCase().contains(
-                              _searchQuery,
-                            );
+                            e.categoryName.toLowerCase().contains(_searchQuery);
                         final matchesCategory =
                             _selectedCategory == null ||
                             e.categoryName == _selectedCategory;
@@ -278,6 +276,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           date: expense.date,
                           amount: expense.amount,
                           accentColor: style.color,
+                          originalCurrency: expense.currency,
+                          originalAmount: expense.originalAmount,
                         );
 
                         return Dismissible(

@@ -7,14 +7,15 @@ class TransactionTile extends StatelessWidget {
   final TransactionData transaction;
   final VoidCallback? onTap;
 
-  const TransactionTile({
-    super.key,
-    required this.transaction,
-    this.onTap,
-  });
+  const TransactionTile({super.key, required this.transaction, this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final showsOriginal =
+        transaction.originalCurrency != null &&
+        transaction.originalCurrency != 'TRY' &&
+        transaction.originalAmount != null;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -64,9 +65,26 @@ class TransactionTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '-${NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(transaction.amount)}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '-${NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(transaction.amount)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                if (showsOriginal)
+                  Text(
+                    '${transaction.originalAmount!.toStringAsFixed(2)} '
+                    '${transaction.originalCurrency}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
             ),
           ],
         ),

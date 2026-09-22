@@ -189,6 +189,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                 date: expense.date,
                                 amount: expense.amount,
                                 accentColor: style.color,
+                                originalCurrency: expense.currency,
+                                originalAmount: expense.originalAmount,
                               );
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),

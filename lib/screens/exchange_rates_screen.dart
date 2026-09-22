@@ -127,9 +127,9 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
                                   backgroundColor: colorScheme.primary
                                       .withValues(alpha: 0.15),
                                   child: Text(
-                                    currency.code.substring(0, 2),
+                                    currency.code,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                       color: colorScheme.primary,
                                     ),
