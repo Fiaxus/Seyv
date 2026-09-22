@@ -44,24 +44,73 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   }
 
   Future<bool> _confirmDelete(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Harcamayı Sil'),
-          content: const Text(
-            'Bu harcamayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
+          title: Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: colorScheme.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.delete_outline,
+                  color: colorScheme.error,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Harcamayı Sil',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            'Bu harcamayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Vazgeç'),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                  side: BorderSide(color: colorScheme.outline),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Vazgeç'),
+              ),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(
-                'Sil',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.error,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text('Sil'),
               ),
             ),
           ],

@@ -28,12 +28,21 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
     _CurrencyInfo('CHF', 'İsviçre Frangı'),
   ];
 
+  DateTime? _lastUpdated;
+
   @override
   void initState() {
     super.initState();
+    _loadRates();
+  }
+
+  void _loadRates() {
     context.read<ExchangeRateCubit>().loadRates(
       _currencies.map((c) => c.code).toList(),
     );
+    setState(() {
+      _lastUpdated = DateTime.now();
+    });
   }
 
   @override
@@ -72,15 +81,20 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
                             fontSize: 18,
                           ),
                         ),
+                        Text(
+                          _lastUpdated != null
+                              ? '${DateFormat('HH:mm').format(_lastUpdated!)} güncellendi'
+                              : 'Güncelleniyor...',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      context.read<ExchangeRateCubit>().loadRates(
-                        _currencies.map((c) => c.code).toList(),
-                      );
-                    },
+                    onTap: _loadRates,
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
