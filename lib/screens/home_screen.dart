@@ -74,16 +74,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 List<CategoryData> categories = [];
                 List<Expense> recentExpenses = [];
                 double totalAmount = 0;
+                double? trendPercent;
 
                 if (state is ExpenseLoaded) {
-                  // 1) Aylık toplam tutar
-                  for (final expense in state.expenses) {
+                  final now = DateTime.now();
+
+                  // Sadece BU AYA ait harcamalar
+                  final currentMonthExpenses = state.expenses
+                      .where(
+                        (e) =>
+                            e.date.year == now.year &&
+                            e.date.month == now.month,
+                      )
+                      .toList();
+
+                  // 1) Aylık toplam tutar (sadece bu ay)
+                  for (final expense in currentMonthExpenses) {
                     totalAmount += expense.amount;
                   }
 
-                  // 2) Kategoriye göre gruplama + toplama
+                  // Geçen ayın toplamı (trend karşılaştırması için)
+                  final previousMonthDate = DateTime(
+                    now.year,
+                    now.month - 1,
+                    1,
+                  );
+                  final previousMonthTotal = state.expenses
+                      .where(
+                        (e) =>
+                            e.date.year == previousMonthDate.year &&
+                            e.date.month == previousMonthDate.month,
+                      )
+                      .fold<double>(0, (sum, e) => sum + e.amount);
+
+                  if (previousMonthTotal > 0) {
+                    trendPercent =
+                        ((totalAmount - previousMonthTotal) /
+                            previousMonthTotal) *
+                        100;
+                  }
+
+                  // 2) Kategoriye göre gruplama + toplama (sadece bu ay)
                   final Map<String, double> categoryTotals = {};
-                  for (final expense in state.expenses) {
+                  for (final expense in currentMonthExpenses) {
                     categoryTotals.update(
                       expense.categoryName,
                       (value) => value + expense.amount,
@@ -101,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }).toList();
 
-                  // 3) Son harcamalar (ilk 3 tanesi, zaten tarihe göre sıralı geliyor)
+                  // 3) Son harcamalar (tüm zamanlardan en yeni 3 tanesi)
                   recentExpenses = state.expenses.take(3).toList();
                 }
 
@@ -128,9 +161,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 22,
-                                backgroundColor: Theme.of(context)
-                                    .colorScheme
-                                    .primary,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
                                 child: Text(
                                   initials,
                                   style: const TextStyle(
@@ -145,7 +178,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     getGreeting(),
-                                    style: Theme.of(context).textTheme.bodySmall
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
                                         ?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
@@ -168,9 +203,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
                                 ),
                                 child: const Icon(
@@ -219,7 +254,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: Colors.white.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -244,6 +281,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            if (trendPercent != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    trendPercent >= 0
+                                        ? Icons.trending_up
+                                        : Icons.trending_down,
+                                    color: Colors.greenAccent[100],
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Geçen aya göre %${trendPercent.abs().round()} '
+                                    '${trendPercent >= 0 ? 'daha fazla' : 'daha az'}',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -257,8 +319,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 Text(
                                   'Kalan ${NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(remaining)}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: remaining < 0
+                                        ? Theme.of(context).colorScheme.error
+                                        : Colors.white,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -274,9 +338,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
+                                valueColor:
+                                    const AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                               ),
                             ),
                           ],
@@ -303,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 12),
                       if (categories.isEmpty)
-                        const Text('Henüz kategori verisi yok.')
+                        const Text('Bu ay için kategori verisi yok.')
                       else
                         SizedBox(
                           height: 130,
@@ -377,7 +442,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: TransactionTile(
                                 transaction: data,
                                 onTap: () {
-                                  context.push('/expense-add', extra: expense);
+                                  context.push(
+                                    '/expense-add',
+                                    extra: expense,
+                                  );
                                 },
                               ),
                             );
