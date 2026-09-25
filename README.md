@@ -215,4 +215,3 @@ test/ klasöründe, Firebase/widget kurulumu gerektirmeyen unit testler bulunur:
 
 ## Ekran Görüntüleri
 
-(Ekran görüntüleri buraya eklenecek.)
