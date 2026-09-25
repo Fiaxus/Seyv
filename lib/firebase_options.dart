@@ -52,24 +52,22 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCUgVKyiBJMfQhgtWxX9zQSaMpP-A1v4Pg',
-    appId: '1:377283793239:android:1ddfb93fd8c6ef385c2e12',
+    appId: '1:377283793239:android:b53b1827d03d1cf85c2e12',
     messagingSenderId: '377283793239',
     projectId: 'harcama-takip-uygulamasi-bec2c',
     storageBucket: 'harcama-takip-uygulamasi-bec2c.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCGdsRiJmN2djZlgJNvP1Q9YbgyHXC2QI0',
-    appId: '1:377283793239:ios:4b8b6745c90a50825c2e12',
+    appId: '1:377283793239:ios:a0c82627204344c75c2e12',
     messagingSenderId: '377283793239',
     projectId: 'harcama-takip-uygulamasi-bec2c',
     storageBucket: 'harcama-takip-uygulamasi-bec2c.firebasestorage.app',
     iosBundleId: 'com.example.harcamaTakipUygulamasi',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCGdsRiJmN2djZlgJNvP1Q9YbgyHXC2QI0',
-    appId: '1:377283793239:ios:4b8b6745c90a50825c2e12',
+    appId: '1:377283793239:ios:a0c82627204344c75c2e12',
     messagingSenderId: '377283793239',
     projectId: 'harcama-takip-uygulamasi-bec2c',
     storageBucket: 'harcama-takip-uygulamasi-bec2c.firebasestorage.app',
