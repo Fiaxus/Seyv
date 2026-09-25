@@ -223,10 +223,6 @@ test/ klasöründe, Firebase/widget kurulumu gerektirmeyen unit testler bulunur:
 |---|---|---|
 | ![Harcama Ekle](screenshots/expense_add.png) | ![Harcama Düzenle](screenshots/expense_edit.png) | ![Harcamalar](screenshots/expense_list.png) |
 
-| Kategori Detay | İstatistik | Döviz Kurları |
+| İstatistik | Döviz Kurları | Profil |
 |---|---|---|
-| ![Kategori Detay](screenshots/category_detail.png) | ![İstatistik](screenshots/statistics.png) | ![Döviz Kurları](screenshots/exchange_rates.png) |
-
-| Profil |
-|---|
-| ![Profil](screenshots/profile.png) |
+| ![İstatistik](screenshots/statistics.png) | ![Döviz Kurları](screenshots/exchange_rates.png) | ![Profil](screenshots/profile.png) |
