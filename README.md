@@ -215,3 +215,20 @@ test/ klasöründe, Firebase/widget kurulumu gerektirmeyen unit testler bulunur:
 
 ## Ekran Görüntüleri
 
+## Ekran Görüntüleri
+
+| Giriş | Kayıt Ol | Ana Ekran |
+|---|---|---|
+| ![Giriş](screenshots/login.png) | ![Kayıt Ol](screenshots/register.png) | ![Ana Ekran](screenshots/home.png) |
+
+| Harcama Ekle | Harcama Düzenle | Harcamalar |
+|---|---|---|
+| ![Harcama Ekle](screenshots/expense_add.png) | ![Harcama Düzenle](screenshots/expense_edit.png) | ![Harcamalar](screenshots/expense_list.png) |
+
+| Kategori Detay | İstatistik | Döviz Kurları |
+|---|---|---|
+| ![Kategori Detay](screenshots/category_detail.png) | ![İstatistik](screenshots/statistics.png) | ![Döviz Kurları](screenshots/exchange_rates.png) |
+
+| Profil |
+|---|
+| ![Profil](screenshots/profile.png) |
