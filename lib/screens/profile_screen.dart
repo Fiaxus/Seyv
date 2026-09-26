@@ -36,13 +36,150 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bu özellik yakında eklenecek.')),
+  Future<void> _changePassword(BuildContext context) async {
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+    final authCubit = context.read<AuthCubit>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        String? currentError;
+        String? newError;
+        String? confirmError;
+        bool isSubmitting = false;
+
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            Future<void> submit() async {
+              final current = currentController.text;
+              final newPassword = newController.text;
+              final confirm = confirmController.text;
+
+              setDialogState(() {
+                currentError = current.isEmpty ? 'Mevcut şifreni gir' : null;
+                newError = newPassword.length < 6
+                    ? 'En az 6 karakter olmalı'
+                    : (newPassword == current
+                          ? 'Yeni şifre eskisiyle aynı olamaz'
+                          : null);
+                confirmError = confirm != newPassword
+                    ? 'Şifreler eşleşmiyor'
+                    : null;
+              });
+
+              if (currentError != null ||
+                  newError != null ||
+                  confirmError != null) {
+                return;
+              }
+
+              setDialogState(() => isSubmitting = true);
+
+              // 1) Mevcut şifreyi doğrula
+              try {
+                await authCubit.reauthenticate(password: current);
+              } on FirebaseAuthException catch (e) {
+                setDialogState(() {
+                  isSubmitting = false;
+                  currentError =
+                      (e.code == 'wrong-password' ||
+                          e.code == 'invalid-credential')
+                      ? 'Mevcut şifre yanlış.'
+                      : translateAuthError(e);
+                });
+                return;
+              } catch (e) {
+                setDialogState(() {
+                  isSubmitting = false;
+                  currentError = translateAuthError(e);
+                });
+                return;
+              }
+
+              // 2) Şifreyi güncelle
+              try {
+                await authCubit.updatePassword(newPassword: newPassword);
+              } catch (e) {
+                setDialogState(() {
+                  isSubmitting = false;
+                  newError = translateAuthError(e);
+                });
+                return;
+              }
+
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Şifre güncellendi.')),
+                );
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('Şifre Değiştir'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: currentController,
+                    obscureText: true,
+                    enabled: !isSubmitting,
+                    decoration: InputDecoration(
+                      labelText: 'Mevcut şifre',
+                      errorText: currentError,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: newController,
+                    obscureText: true,
+                    enabled: !isSubmitting,
+                    decoration: InputDecoration(
+                      labelText: 'Yeni şifre',
+                      errorText: newError,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: confirmController,
+                    obscureText: true,
+                    enabled: !isSubmitting,
+                    decoration: InputDecoration(
+                      labelText: 'Yeni şifre (tekrar)',
+                      errorText: confirmError,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                TextButton(
+                  onPressed: isSubmitting ? null : submit,
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Kaydet'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
-  /// "Nafi Berkay Şahin" -> "NB"
   String _initials(String name) {
     final parts = name
         .trim()
@@ -260,15 +397,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(translateAuthError(e))),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(translateAuthError(e))));
         }
       }
     } else if (nameChanged && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil güncellendi.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Profil güncellendi.')));
     }
   }
 
@@ -384,9 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hesap silinemedi: ${translateAuthError(e)}'),
-          ),
+          SnackBar(content: Text('Hesap silinemedi: ${translateAuthError(e)}')),
         );
       }
     }
@@ -488,9 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     totalCount = state.expenses.length;
                     final months = <String>{};
                     for (final expense in state.expenses) {
-                      months.add(
-                        '${expense.date.year}-${expense.date.month}',
-                      );
+                      months.add('${expense.date.year}-${expense.date.month}');
                     }
                     activeMonths = months.length;
                   }
@@ -534,7 +665,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _SettingsRow(
                       icon: Icons.key_outlined,
                       label: 'Şifre değiştir',
-                      onTap: () => _showComingSoon(context),
+                      onTap: () => _changePassword(context),
                     ),
                     const _RowDivider(),
                     BlocBuilder<BudgetCubit, BudgetState>(

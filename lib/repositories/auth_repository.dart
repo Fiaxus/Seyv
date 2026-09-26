@@ -30,4 +30,8 @@ class AuthRepository {
   Future<void> updateEmail({required String newEmail}) async {
     await _authService.updateEmail(newEmail: newEmail);
   }
+
+  Future<void> updatePassword({required String newPassword}) async {
+    await _authService.updatePassword(newPassword: newPassword);
+  }
 }

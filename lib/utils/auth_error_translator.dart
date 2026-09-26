@@ -20,6 +20,8 @@ String translateAuthError(Object error) {
         return 'Çok fazla deneme yapıldı, lütfen biraz sonra tekrar deneyin.';
       case 'network-request-failed':
         return 'İnternet bağlantınızı kontrol edin.';
+      case 'requires-recent-login':
+        return 'Bu işlem için tekrar giriş yapman gerekiyor. Lütfen tekrar dene.';
       default:
         return 'Bir hata oluştu, lütfen tekrar deneyin.';
     }

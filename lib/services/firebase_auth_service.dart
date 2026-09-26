@@ -46,4 +46,10 @@ class FirebaseAuthService {
     if (user == null) return;
     await user.verifyBeforeUpdateEmail(newEmail);
   }
+
+  Future<void> updatePassword({required String newPassword}) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+    await user.updatePassword(newPassword);
+  }
 }
