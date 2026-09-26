@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import 'profile_screen.dart';
 import 'statistics_screen.dart';
@@ -30,7 +31,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
-            floatingActionButton: Container(
+      floatingActionButton: Container(
         width: 56,
         height: 56,
         decoration: BoxDecoration(
@@ -43,7 +44,10 @@ class _MainShellState extends State<MainShell> {
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: () => context.push('/expense-add'),
-            child: Icon(Icons.add, color: AppTheme.onBrandGradient(context)),
+            child: Icon(
+              LucideIcons.plus,
+              color: AppTheme.onBrandGradient(context),
+            ),
           ),
         ),
       ),
@@ -62,23 +66,19 @@ class _MainShellState extends State<MainShell> {
             .withValues(alpha: 0.5),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
+            icon: Icon(LucideIcons.house),
             label: 'Anasayfa',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt_outlined),
-            activeIcon: Icon(Icons.list_alt),
+            icon: Icon(LucideIcons.list_ordered),
             label: 'Harcama',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart_outline),
-            activeIcon: Icon(Icons.pie_chart),
+            icon: Icon(LucideIcons.chart_pie),
             label: 'İstatistik',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
+            icon: Icon(LucideIcons.user),
             label: 'Profil',
           ),
         ],

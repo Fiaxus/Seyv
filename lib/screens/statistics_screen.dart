@@ -6,6 +6,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../blocs/expense/expense_cubit.dart';
 import '../blocs/expense/expense_state.dart';
+import '../theme/app_theme.dart';
 import '../utils/category_style.dart';
 
 class _MonthlyTotal {
@@ -45,7 +46,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Bu ayki harcamalar
             final currentMonthExpenses = state.expenses
                 .where(
                   (e) => e.date.year == now.year && e.date.month == now.month,
@@ -57,7 +57,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               (sum, e) => sum + e.amount,
             );
 
-            // Kategoriye göre toplamlar (bu ay)
             final Map<String, double> categoryTotals = {};
             for (final e in currentMonthExpenses) {
               categoryTotals.update(
@@ -69,7 +68,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             final sortedCategories = categoryTotals.entries.toList()
               ..sort((a, b) => b.value.compareTo(a.value));
 
-            // Son 6 ay (bu ay dahil) toplamları
+            final topEntry = sortedCategories.isNotEmpty
+                ? sortedCategories.first
+                : null;
+            final topStyle = topEntry != null
+                ? CategoryStyles.of(topEntry.key)
+                : null;
+
             final List<_MonthlyTotal> monthlyTotals = [];
             for (int i = 5; i >= 0; i--) {
               final monthDate = DateTime(now.year, now.month - i, 1);
@@ -88,7 +93,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               );
             }
 
-            // Önceki ay ile karşılaştırma (trend yüzdesi)
             final previousMonthDate = DateTime(now.year, now.month - 1, 1);
             final previousMonthTotal = state.expenses
                 .where(
@@ -122,8 +126,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Kategori dağılımı (pasta grafik)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -247,8 +249,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Son 6 ay (çubuk grafik)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -296,86 +296,70 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         const SizedBox(height: 16),
                         SizedBox(
                           height: 140,
-                          child: BarChart(
-                            BarChartData(
-                              maxY: maxMonthlyTotal == 0
-                                  ? 1
-                                  : maxMonthlyTotal * 1.3,
-                              barTouchData: BarTouchData(enabled: false),
-                              gridData: const FlGridData(show: false),
-                              borderData: FlBorderData(show: false),
-                              titlesData: FlTitlesData(
-                                leftTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                topTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                rightTitles: const AxisTitles(
-                                  sideTitles: SideTitles(showTitles: false),
-                                ),
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 26,
-                                    getTitlesWidget: (value, meta) {
-                                      final index = value.toInt();
-                                      if (index < 0 ||
-                                          index >= monthlyTotals.length) {
-                                        return const SizedBox();
-                                      }
-                                      return Padding(
-                                        padding: const EdgeInsets.only(top: 6),
-                                        child: Text(
-                                          monthlyTotals[index].label,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              for (
+                                var i = 0;
+                                i < monthlyTotals.length;
+                                i++
+                              ) ...[
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Container(
+                                        height: maxMonthlyTotal == 0
+                                            ? 4
+                                            : (monthlyTotals[i].total /
+                                                      maxMonthlyTotal) *
+                                                  100,
+                                        decoration: BoxDecoration(
+                                          gradient:
+                                              i == monthlyTotals.length - 1
+                                              ? AppTheme.brandGradient(context)
+                                              : null,
+                                          color: i == monthlyTotals.length - 1
+                                              ? null
+                                              : colorScheme.primary.withValues(
+                                                  alpha: 0.2,
+                                                ),
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                                top: Radius.circular(20),
+                                              ),
                                         ),
-                                      );
-                                    },
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        monthlyTotals[i].label,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              barGroups: monthlyTotals.asMap().entries.map((
-                                entry,
-                              ) {
-                                final isLast =
-                                    entry.key == monthlyTotals.length - 1;
-                                return BarChartGroupData(
-                                  x: entry.key,
-                                  barRods: [
-                                    BarChartRodData(
-                                      toY: entry.value.total,
-                                      color: isLast
-                                          ? colorScheme.primary
-                                          : colorScheme.primary.withValues(
-                                              alpha: 0.3,
-                                            ),
-                                      width: 18,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
+                                if (i != monthlyTotals.length - 1)
+                                  const SizedBox(width: 10),
+                              ],
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Alt kartlar: en çok harcanan + günlük ortalama
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: colorScheme.outline),
                           ),
                           child: Column(
@@ -384,32 +368,61 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               Text(
                                 'En çok harcanan',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              if (sortedCategories.isEmpty)
+                              const SizedBox(height: 10),
+                              if (topEntry == null || topStyle == null)
                                 const Text('—')
-                              else ...[
-                                Text(
-                                  sortedCategories.first.key,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
+                              else
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: topStyle
+                                            .color(context)
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        topStyle.icon,
+                                        color: topStyle.color(context),
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            topEntry.key,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            NumberFormat.currency(
+                                              locale: 'tr_TR',
+                                              symbol: '₺',
+                                            ).format(topEntry.value),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  NumberFormat.currency(
-                                    locale: 'tr_TR',
-                                    symbol: '₺',
-                                  ).format(sortedCategories.first.value),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                         ),
@@ -420,7 +433,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: colorScheme.outline),
                           ),
                           child: Column(
@@ -429,11 +442,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               Text(
                                 'Günlük ortalama',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                   color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Text(
                                 NumberFormat.currency(
                                   locale: 'tr_TR',
@@ -441,7 +455,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 ).format(monthTotal / now.day),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 18,
                                 ),
                               ),
                               Text(
