@@ -58,4 +58,12 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> updatePassword({required String newPassword}) {
     return _authRepository.updatePassword(newPassword: newPassword);
   }
+
+  Future<void> sendEmailVerification() {
+    return _authRepository.sendEmailVerification();
+  }
+
+  Future<bool> reloadAndCheckVerified() {
+    return _authRepository.reloadAndCheckVerified();
+  }
 }

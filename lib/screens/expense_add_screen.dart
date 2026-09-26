@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../widgets/app_gradient_button.dart';
+import '../widgets/app_snackbar.dart';
 import '../blocs/expense/expense_cubit.dart';
 import '../blocs/exchange_rate/exchange_rate_cubit.dart';
 import '../blocs/exchange_rate/exchange_rate_state.dart';
@@ -121,8 +122,11 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
     final enteredAmount = double.tryParse(amountText) ?? 0;
 
     if (enteredAmount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen geçerli bir tutar girin.')),
+      AppSnackBar.show(
+        context,
+        message: 'Lütfen geçerli bir tutar girin.',
+        icon: Icons.error_outline,
+        color: Theme.of(context).colorScheme.error,
       );
       return;
     }
@@ -135,10 +139,11 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
       final rateState = context.read<ExchangeRateCubit>().state;
       if (rateState is! ExchangeRateLoaded ||
           rateState.rates[_selectedCurrency] == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kur bilgisi alınamadı, tekrar deneyin.'),
-          ),
+        AppSnackBar.show(
+          context,
+          message: 'Kur bilgisi alınamadı, tekrar deneyin.',
+          icon: Icons.error_outline,
+          color: Theme.of(context).colorScheme.error,
         );
         return;
       }
@@ -182,8 +187,11 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
         setState(() {
           _isSaving = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kaydedilemedi: $e')),
+        AppSnackBar.show(
+          context,
+          message: 'Kaydedilemedi: $e',
+          icon: Icons.error_outline,
+          color: Theme.of(context).colorScheme.error,
         );
       }
     }

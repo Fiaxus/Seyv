@@ -11,15 +11,13 @@ import '../models/budget_plan.dart';
 import '../theme/app_theme.dart';
 import '../utils/category_style.dart';
 import '../widgets/app_gradient_button.dart';
-
-// ---------- Biçimlendirme yardımcıları ----------
+import '../widgets/app_snackbar.dart';
 
 String _plain(double value) => value.round().toString();
 
 String _grouped(double value) =>
     NumberFormat.decimalPattern('tr_TR').format(value.round());
 
-/// "Bütçenin %15'i", "%20'si", "%13'ü" — Türkçe ek sayının okunuşuna göre.
 String _percentText(int percent) {
   final p = percent.clamp(0, 100);
   const tens = {
@@ -56,8 +54,6 @@ String _percentText(int percent) {
   }
   return "Bütçenin %$p'$suffix";
 }
-
-// ---------- Ekran ----------
 
 class BudgetPlanScreen extends StatelessWidget {
   const BudgetPlanScreen({super.key});
@@ -153,24 +149,31 @@ class BudgetPlanScreen extends StatelessWidget {
     if (userId == null) return;
 
     final cubit = context.read<BudgetPlanCubit>();
-    final messenger = ScaffoldMessenger.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     try {
       await cubit.save(userId);
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Bütçe planı kaydedildi.')),
-      );
-      if (context.mounted) context.pop();
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Bütçe planı kaydedildi.',
+          icon: Icons.check_circle_outline,
+          color: colorScheme.primary,
+        );
+        context.pop();
+      }
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Bütçe planı kaydedilemedi. Lütfen tekrar dene.'),
-        ),
-      );
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: 'Bütçe planı kaydedilemedi. Lütfen tekrar dene.',
+          icon: Icons.error_outline,
+          color: colorScheme.error,
+        );
+      }
     }
   }
 
-  /// Tutar girme dialog'u. [min]/[max] dışındaki değerlerde "Tamam" pasif.
   Future<double?> _askAmount(
     BuildContext context, {
     required String title,
@@ -227,9 +230,9 @@ class BudgetPlanScreen extends StatelessWidget {
                 TextButton(
                   onPressed: error != null
                       ? null
-                      : () =>
-                            Navigator.of(dialogContext)
-                                .pop(double.tryParse(controller.text) ?? 0),
+                      : () => Navigator.of(
+                          dialogContext,
+                        ).pop(double.tryParse(controller.text) ?? 0),
                   child: const Text('Tamam'),
                 ),
               ],
@@ -292,7 +295,6 @@ class BudgetPlanScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                 children: [
-                  // Başlık
                   Row(
                     children: [
                       GestureDetector(
@@ -331,8 +333,6 @@ class BudgetPlanScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // Aylık toplam bütçe kartı
                   _MonthlyCard(
                     plan: plan,
                     onIncrease: cubit.increaseMonthly,
@@ -342,12 +342,8 @@ class BudgetPlanScreen extends StatelessWidget {
                     onTapAmount: () => _editMonthly(context),
                   ),
                   const SizedBox(height: 16),
-
-                  // Bilgi kutusu
                   _InfoBox(plan: plan),
                   const SizedBox(height: 24),
-
-                  // Kategori limitleri
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -402,8 +398,6 @@ class BudgetPlanScreen extends StatelessWidget {
   }
 }
 
-// ---------- Aylık toplam bütçe kartı ----------
-
 class _MonthlyCard extends StatelessWidget {
   final BudgetPlan plan;
   final VoidCallback? onIncrease;
@@ -428,11 +422,7 @@ class _MonthlyCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colorScheme.primary, AppTheme.heroDark],
-        ),
+        gradient: AppTheme.balanceGradient(context),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -552,8 +542,6 @@ class _HeroStepButton extends StatelessWidget {
   }
 }
 
-// ---------- Bilgi kutusu ----------
-
 class _InfoBox extends StatelessWidget {
   final BudgetPlan plan;
 
@@ -610,8 +598,6 @@ class _InfoBox extends StatelessWidget {
     );
   }
 }
-
-// ---------- Kategori satırı ----------
 
 class _CategoryLimitRow extends StatelessWidget {
   final String category;

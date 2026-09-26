@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
-//import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  /// Ana ekrandaki bütçe kartı ve Bütçe Planı kartındaki gradient'in koyu
-  /// ucu. Paletteki foreground (açık tema) rengi. Kart her iki temada da
-  /// koyu kaldığı için tema'dan bağımsız sabit.
-  static const heroDark = Color(0xFF10312D);
+  static LinearGradient balanceGradient(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomRight,
+      colors: isDark
+          ? const [Color(0xFF215450), Color(0xFF17383D), Color(0xFF142C35)]
+          : const [Color(0xFF1E4A46), Color(0xFF14332F), Color(0xFF10282B)],
+      stops: isDark ? const [0.0, 0.6, 1.0] : const [0.0, 0.55, 1.0],
+    );
+  }
+
+  static LinearGradient brandGradient(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isDark
+          ? const [Color(0xFF4FE3C1), Color(0xFF54C9DE)]
+          : const [Color(0xFF08A88A), Color(0xFF23B7B0)],
+    );
+  }
+
+  static Color onBrandGradient(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? Colors.black
+        : Colors.white;
+  }
 
   static final lightColorScheme = ColorScheme.light(
     primary: const Color(0xFF08A88A),
@@ -33,7 +56,6 @@ class AppTheme {
     colorScheme: lightColorScheme,
     scaffoldBackgroundColor: const Color(0xFFF7FAF8),
     useMaterial3: true,
-    //textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.light().textTheme,),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: lightColorScheme.surface.withValues(alpha: 0.6),
@@ -49,7 +71,6 @@ class AppTheme {
     colorScheme: darkColorScheme,
     scaffoldBackgroundColor: const Color(0xFF12181E),
     useMaterial3: true,
-    //textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: darkColorScheme.surface.withValues(alpha: 0.6),

@@ -34,4 +34,12 @@ class AuthRepository {
   Future<void> updatePassword({required String newPassword}) async {
     await _authService.updatePassword(newPassword: newPassword);
   }
+
+  Future<void> sendEmailVerification() async {
+    await _authService.sendEmailVerification();
+  }
+
+  Future<bool> reloadAndCheckVerified() async {
+    return _authService.reloadAndCheckVerified();
+  }
 }

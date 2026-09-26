@@ -82,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (state is ExpenseLoaded) {
                   final now = DateTime.now();
 
-                  // Sadece BU AYA ait harcamalar
                   final currentMonthExpenses = state.expenses
                       .where(
                         (e) =>
@@ -91,12 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                       .toList();
 
-                  // 1) Aylık toplam tutar (sadece bu ay)
                   for (final expense in currentMonthExpenses) {
                     totalAmount += expense.amount;
                   }
 
-                  // Geçen ayın toplamı (trend karşılaştırması için)
                   final previousMonthDate = DateTime(
                     now.year,
                     now.month - 1,
@@ -117,7 +114,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         100;
                   }
 
-                  // 2) Kategoriye göre gruplama + toplama (sadece bu ay)
                   final Map<String, double> categoryTotals = {};
                   for (final expense in currentMonthExpenses) {
                     categoryTotals.update(
@@ -138,11 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }).toList();
 
-                  // 3) Son harcamalar (tüm zamanlardan en yeni 3 tanesi)
                   recentExpenses = state.expenses.take(3).toList();
                 }
 
-                // Bütçe hesaplamaları
                 final remaining = budgetAmount - totalAmount;
                 final progress = budgetAmount > 0
                     ? (totalAmount / budgetAmount).clamp(0.0, 1.0)
@@ -163,15 +157,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           return Row(
                             children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: AppTheme.brandGradient(context),
+                                ),
+                                alignment: Alignment.center,
                                 child: Text(
                                   initials,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: AppTheme.onBrandGradient(context),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -182,9 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     getGreeting(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
@@ -207,9 +202,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
                                   ),
                                 ),
                                 child: const Icon(
@@ -226,14 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              AppTheme.heroDark,
-                            ],
-                          ),
+                          gradient: AppTheme.balanceGradient(context),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Column(
@@ -258,9 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -342,10 +328,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -446,10 +431,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: TransactionTile(
                                 transaction: data,
                                 onTap: () {
-                                  context.push(
-                                    '/expense-add',
-                                    extra: expense,
-                                  );
+                                  context.push('/expense-add', extra: expense);
                                 },
                               ),
                             );

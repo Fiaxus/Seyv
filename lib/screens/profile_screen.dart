@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../widgets/app_snackbar.dart';
 import '../blocs/auth/auth_cubit.dart';
 import '../blocs/budget/budget_cubit.dart';
 import '../blocs/budget/budget_state.dart';
@@ -11,6 +12,7 @@ import '../blocs/expense/expense_cubit.dart';
 import '../blocs/expense/expense_state.dart';
 import '../blocs/theme/theme_cubit.dart';
 import '../repositories/user_repository.dart';
+import '../theme/app_theme.dart';
 import '../utils/auth_error_translator.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -33,6 +35,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (userId != null) {
       context.read<BudgetCubit>().loadBudget(userId);
+    }
+  }
+
+  Future<void> _handleVerifyTap(BuildContext context) async {
+    final authCubit = context.read<AuthCubit>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final verified = await authCubit.reloadAndCheckVerified();
+    if (!context.mounted) return;
+
+    if (verified) {
+      setState(() {});
+      AppSnackBar.show(
+        context,
+        message: 'Hesabın doğrulandı.',
+        icon: Icons.check_circle_outline,
+        color: colorScheme.primary,
+      );
+      return;
+    }
+
+    try {
+      await authCubit.sendEmailVerification();
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message:
+              'Doğrulama e-postası gönderildi. E-postanı doğruladıktan '
+              'sonra buraya tekrar dokun.',
+          icon: Icons.mail_outline,
+          color: colorScheme.secondary,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppSnackBar.show(
+          context,
+          message: translateAuthError(e),
+          icon: Icons.error_outline,
+          color: colorScheme.error,
+        );
+      }
     }
   }
 
@@ -77,7 +120,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               setDialogState(() => isSubmitting = true);
 
-              // 1) Mevcut şifreyi doğrula
               try {
                 await authCubit.reauthenticate(password: current);
               } on FirebaseAuthException catch (e) {
@@ -98,7 +140,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 return;
               }
 
-              // 2) Şifreyi güncelle
               try {
                 await authCubit.updatePassword(newPassword: newPassword);
               } catch (e) {
@@ -113,8 +154,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.of(dialogContext).pop();
               }
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Şifre güncellendi.')),
+                AppSnackBar.show(
+                  context,
+                  message: 'Şifre güncellendi.',
+                  icon: Icons.check_circle_outline,
+                  color: Theme.of(context).colorScheme.primary,
                 );
               }
             }
@@ -363,7 +407,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final nameChanged = newName != currentName;
     final emailChanged = newEmail != currentEmail;
 
-    // İsim değişikliği: anında kaydedilir, doğrulama gerekmez
     if (nameChanged) {
       await UserRepository().setName(userId, newName);
       setState(() {
@@ -371,7 +414,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
 
-    // E-posta değişikliği: şifre doğrulaması + yeni adrese doğrulama e-postası
     if (emailChanged) {
       final password = await _askForPassword(
         context,
@@ -385,25 +427,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await authCubit.reauthenticate(password: password);
         await authCubit.updateEmail(newEmail: newEmail);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
+          AppSnackBar.show(
+            context,
+            message:
                 'Doğrulama bağlantısı $newEmail adresine gönderildi. '
                 'E-postanızın değişmesi için bağlantıya tıklamanız gerekiyor.',
-              ),
-              duration: const Duration(seconds: 5),
-            ),
+            icon: Icons.mail_outline,
+            color: Theme.of(context).colorScheme.secondary,
+            duration: const Duration(seconds: 5),
           );
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(translateAuthError(e))));
+          AppSnackBar.show(
+            context,
+            message: translateAuthError(e),
+            icon: Icons.error_outline,
+            color: Theme.of(context).colorScheme.error,
+          );
         }
       }
     } else if (nameChanged && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Profil güncellendi.')));
+      AppSnackBar.show(
+        context,
+        message: 'Profil güncellendi.',
+        icon: Icons.check_circle_outline,
+        color: Theme.of(context).colorScheme.primary,
+      );
     }
   }
 
@@ -504,11 +554,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authCubit = context.read<AuthCubit>();
 
     try {
-      // 1) Önce kimlik doğrulamasını tazele — bundan sonraki hiçbir
-      // adım "requires-recent-login" hatasıyla yarıda kesilmez.
       await authCubit.reauthenticate(password: password);
 
-      // 2) Kimlik doğrulandıktan sonra asıl silme işlemlerine geç.
       await expenseCubit.deleteAllExpensesForUser(userId);
       await UserRepository().deleteUser(userId);
       await authCubit.deleteAccount();
@@ -518,8 +565,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hesap silinemedi: ${translateAuthError(e)}')),
+        AppSnackBar.show(
+          context,
+          message: 'Hesap silinemedi: ${translateAuthError(e)}',
+          icon: Icons.error_outline,
+          color: Theme.of(context).colorScheme.error,
         );
       }
     }
@@ -551,8 +601,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Kullanıcı bilgisi kartı
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -567,13 +615,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     final name = snapshot.data ?? '';
                     return Row(
                       children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: colorScheme.primary,
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: AppTheme.brandGradient(context),
+                          ),
+                          alignment: Alignment.center,
                           child: Text(
                             _initials(name),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppTheme.onBrandGradient(context),
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -600,7 +653,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              _VerifiedBadge(isVerified: isVerified),
+                              _VerifiedBadge(
+                                isVerified: isVerified,
+                                onTap: isVerified
+                                    ? null
+                                    : () => _handleVerifyTap(context),
+                              ),
                             ],
                           ),
                         ),
@@ -610,8 +668,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // İstatistik kartları
               BlocBuilder<ExpenseCubit, ExpenseState>(
                 builder: (context, state) {
                   int totalCount = 0;
@@ -646,8 +702,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               const SizedBox(height: 16),
-
-              // Ayarlar listesi (tek kart, satırlar arası çizgi)
               Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
@@ -707,8 +761,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Çıkış Yap
               GestureDetector(
                 onTap: () async {
                   await context.read<AuthCubit>().signOut();
@@ -744,8 +796,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Hesabı Sil
               Center(
                 child: TextButton.icon(
                   onPressed: () => _deleteAccount(context),
@@ -773,26 +823,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 class _VerifiedBadge extends StatelessWidget {
   final bool isVerified;
+  final VoidCallback? onTap;
 
-  const _VerifiedBadge({required this.isVerified});
+  const _VerifiedBadge({required this.isVerified, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final color = isVerified ? colorScheme.primary : colorScheme.secondary;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        isVerified ? 'Doğrulanmış hesap' : 'Doğrulanmamış hesap',
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isVerified ? 'Doğrulanmış hesap' : 'Doğrulanmamış hesap',
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (!isVerified) ...[
+              const SizedBox(width: 4),
+              Icon(Icons.refresh, size: 12, color: color),
+            ],
+          ],
         ),
       ),
     );

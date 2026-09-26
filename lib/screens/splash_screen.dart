@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router/go_router.dart';
 
+import '../theme/app_theme.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -38,12 +40,17 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: const Icon(
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppTheme.brandGradient(context),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
                 LucideIcons.wallet,
-                color: Colors.white,
+                color: AppTheme.onBrandGradient(context),
                 size: 36,
               ),
             ),

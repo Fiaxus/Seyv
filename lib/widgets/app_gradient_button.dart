@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 class AppGradientButton extends StatelessWidget {
   final String label;
-
-  /// null verilirse buton pasif olur (soluk görünür, tıklanamaz).
   final VoidCallback? onPressed;
   final double? fontSize;
 
@@ -45,7 +45,7 @@ class AppGradientButton extends StatelessWidget {
                   child: Text(
                     label,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppTheme.onBrandGradient(context),
                       fontWeight: FontWeight.bold,
                       fontSize: fontSize ?? 16,
                     ),

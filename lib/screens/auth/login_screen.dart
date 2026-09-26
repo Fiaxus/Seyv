@@ -7,6 +7,8 @@ import 'package:harcama_takip_uygulamasi/widgets/app_gradient_button.dart';
 import 'package:harcama_takip_uygulamasi/widgets/app_text_field.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
+import '../../widgets/app_snackbar.dart';
+import '../../theme/app_theme.dart';
 import '../../utils/auth_error_translator.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -75,21 +77,25 @@ class _LoginScreenState extends State<LoginScreen> {
       },
     );
 
-    if (email == null || !context.mounted) return;
+        if (email == null || !context.mounted) return;
 
     try {
       await context.read<AuthCubit>().sendPasswordResetEmail(email: email);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Şifre sıfırlama bağlantısı e-postanıza gönderildi.'),
-          ),
+        AppSnackBar.show(
+          context,
+          message: 'Şifre sıfırlama bağlantısı e-postanıza gönderildi.',
+          icon: Icons.mail_outline,
+          color: Theme.of(context).colorScheme.primary,
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(translateAuthError(e))),
+        AppSnackBar.show(
+          context,
+          message: translateAuthError(e),
+          icon: Icons.error_outline,
+          color: Theme.of(context).colorScheme.error,
         );
       }
     }
@@ -98,12 +104,16 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
-      listener: (context, state) {
+            listener: (context, state) {
         if (state is AuthSuccess) {
           context.go('/home');
         } else if (state is AuthError) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.message)));
+          AppSnackBar.show(
+            context,
+            message: state.message,
+            icon: Icons.error_outline,
+            color: Theme.of(context).colorScheme.error,
+          );
         }
       },
 
@@ -118,12 +128,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: 40),
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: const Icon(
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppTheme.brandGradient(context),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
                         LucideIcons.wallet,
-                        color: Colors.white,
+                        color: AppTheme.onBrandGradient(context),
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -224,9 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
-                          // Google ile giriş ekle
-                        },
+                        onPressed: () {},
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           foregroundColor: Theme.of(context)

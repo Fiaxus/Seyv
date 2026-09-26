@@ -52,4 +52,17 @@ class FirebaseAuthService {
     if (user == null) return;
     await user.updatePassword(newPassword);
   }
+
+  Future<void> sendEmailVerification() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+    await user.sendEmailVerification();
+  }
+
+  Future<bool> reloadAndCheckVerified() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return false;
+    await user.reload();
+    return _firebaseAuth.currentUser?.emailVerified ?? false;
+  }
 }

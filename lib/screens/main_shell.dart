@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'home_screen.dart';
 import 'expense_list_screen.dart';
+import '../theme/app_theme.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -29,11 +30,22 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/expense-add'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
+            floatingActionButton: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: AppTheme.brandGradient(context),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => context.push('/expense-add'),
+            child: Icon(Icons.add, color: AppTheme.onBrandGradient(context)),
+          ),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavigationBar(

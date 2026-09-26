@@ -6,6 +6,7 @@ import 'package:harcama_takip_uygulamasi/widgets/app_text_field.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../widgets/app_snackbar.dart';
 import '../../blocs/auth/auth_cubit.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../repositories/user_repository.dart';
@@ -27,7 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
-      listener: (context, state) {
+            listener: (context, state) {
         if (state is AuthSuccess) {
           final userId = FirebaseAuth.instance.currentUser?.uid;
           if (userId != null) {
@@ -35,8 +36,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           }
           context.go('/home');
         } else if (state is AuthError) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.message)));
+          AppSnackBar.show(
+            context,
+            message: state.message,
+            icon: Icons.error_outline,
+            color: Theme.of(context).colorScheme.error,
+          );
         }
       },
 
