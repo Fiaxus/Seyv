@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../utils/category_style.dart';
 import '../widgets/app_gradient_button.dart';
 import '../widgets/app_snackbar.dart';
 import '../blocs/expense/expense_cubit.dart';
@@ -23,14 +24,6 @@ const Map<String, String> _descriptionHints = {
   'Diğer': 'Açıklama girin',
 };
 
-class _CategoryOption {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _CategoryOption(this.icon, this.label, this.color);
-}
-
 class ExpenseAddScreen extends StatefulWidget {
   final Expense? existingExpense;
 
@@ -49,17 +42,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
   DateTime _selectedDate = DateTime.now();
   bool _isSaving = false;
 
-  final List<_CategoryOption> _categories = const [
-    _CategoryOption(Icons.restaurant_outlined, 'Yemek', Color(0xFFE0912F)),
-    _CategoryOption(Icons.shopping_cart_outlined, 'Market', Color(0xFF08A88A)),
-    _CategoryOption(Icons.directions_bus_outlined, 'Ulaşım', Color(0xFF4A90D9)),
-    _CategoryOption(Icons.receipt_long_outlined, 'Fatura', Color(0xFF9B7FE0)),
-    _CategoryOption(Icons.shopping_bag_outlined, 'Alışveriş', Color(0xFFDC4A38)),
-    _CategoryOption(Icons.theater_comedy_outlined, 'Eğlence', Color(0xFFD670C4)),
-    _CategoryOption(Icons.favorite_border, 'Sağlık', Color(0xFF3AA0A0)),
-    _CategoryOption(Icons.school_outlined, 'Eğitim', Color(0xFFE0B23A)),
-    _CategoryOption(Icons.more_horiz, 'Diğer', Color(0xFF8A8A8A)),
-  ];
+  final List<String> _categoryNames = CategoryStyles.all.keys.toList();
 
   bool get _isEditing => widget.existingExpense != null;
 
@@ -82,9 +65,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
       }
       _descriptionController.text = existing.description;
       _selectedDate = existing.date;
-      final index = _categories.indexWhere(
-        (c) => c.label == existing.categoryName,
-      );
+      final index = _categoryNames.indexOf(existing.categoryName);
       _selectedCategoryIndex = index != -1 ? index : 0;
     } else {
       _amountController.text = '0';
@@ -152,12 +133,12 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
       amountTRY = enteredAmount * exchangeRate;
     }
 
-    final selectedCategory = _categories[_selectedCategoryIndex];
+    final selectedCategoryName = _categoryNames[_selectedCategoryIndex];
 
     final expense = Expense(
       id: widget.existingExpense?.id ?? '',
       userId: userId,
-      categoryName: selectedCategory.label,
+      categoryName: selectedCategoryName,
       description: _descriptionController.text,
       location: widget.existingExpense?.location ?? '',
       date: _selectedDate,
@@ -384,7 +365,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _categories.length,
+                itemCount: _categoryNames.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 5,
                   mainAxisSpacing: 12,
@@ -392,7 +373,9 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                   childAspectRatio: 0.75,
                 ),
                 itemBuilder: (context, index) {
-                  final category = _categories[index];
+                  final name = _categoryNames[index];
+                  final style = CategoryStyles.of(name);
+                  final color = style.color(context);
                   final isSelected = index == _selectedCategoryIndex;
                   return GestureDetector(
                     onTap: () {
@@ -406,24 +389,20 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: category.color.withValues(alpha: 0.15),
+                            color: color.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isSelected
-                                  ? category.color
+                                  ? color
                                   : Colors.transparent,
                               width: 2,
                             ),
                           ),
-                          child: Icon(
-                            category.icon,
-                            color: category.color,
-                            size: 22,
-                          ),
+                          child: Icon(style.icon, color: color, size: 22),
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          category.label,
+                          name,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 11,
@@ -482,8 +461,7 @@ class _ExpenseAddScreenState extends State<ExpenseAddScreen> {
                 controller: _descriptionController,
                 decoration: InputDecoration(
                   hintText:
-                      _descriptionHints[_categories[_selectedCategoryIndex]
-                          .label] ??
+                      _descriptionHints[_categoryNames[_selectedCategoryIndex]] ??
                       'Açıklama girin',
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest,

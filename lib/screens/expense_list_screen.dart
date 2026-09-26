@@ -324,7 +324,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                           location: expense.location,
                           date: expense.date,
                           amount: expense.amount,
-                          accentColor: style.color,
+                          accentColor: style.color(context),
                           originalCurrency: expense.currency,
                           originalAmount: expense.originalAmount,
                         );

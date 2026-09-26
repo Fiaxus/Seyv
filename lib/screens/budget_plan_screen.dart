@@ -618,6 +618,7 @@ class _CategoryLimitRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final style = CategoryStyles.of(category);
+    final color = style.color(context);
     final limit = plan.limitFor(category) ?? 0;
     final hasLimit = limit > 0;
     final double ratio = plan.hasMonthly
@@ -643,10 +644,10 @@ class _CategoryLimitRow extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: style.color.withValues(alpha: 0.15),
+                    color: color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(style.icon, color: style.color, size: 20),
+                  child: Icon(style.icon, color: color, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -709,7 +710,7 @@ class _CategoryLimitRow extends StatelessWidget {
                 value: ratio,
                 minHeight: 6,
                 backgroundColor: colorScheme.onSurface.withValues(alpha: 0.08),
-                valueColor: AlwaysStoppedAnimation<Color>(style.color),
+                valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
           ],

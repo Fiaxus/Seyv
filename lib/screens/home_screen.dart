@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: style.icon,
                       categoryName: entry.key,
                       amount: entry.value,
-                      accentColor: style.color,
+                      accentColor: style.color(context),
                       limit: plan.limitFor(entry.key),
                     );
                   }).toList();
@@ -179,7 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     getGreeting(),
-                                    style: Theme.of(context).textTheme.bodySmall
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
                                         ?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
@@ -202,9 +204,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
                                 ),
                                 child: const Icon(
@@ -246,7 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: Colors.white.withValues(
+                                      alpha: 0.15,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -328,9 +332,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
+                                valueColor:
+                                    const AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                               ),
                             ),
                           ],
@@ -422,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               location: expense.location,
                               date: expense.date,
                               amount: expense.amount,
-                              accentColor: style.color,
+                              accentColor: style.color(context),
                               originalCurrency: expense.currency,
                               originalAmount: expense.originalAmount,
                             );
@@ -431,7 +436,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: TransactionTile(
                                 transaction: data,
                                 onTap: () {
-                                  context.push('/expense-add', extra: expense);
+                                  context.push(
+                                    '/expense-add',
+                                    extra: expense,
+                                  );
                                 },
                               ),
                             );

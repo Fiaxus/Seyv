@@ -24,12 +24,7 @@ class AppGradientButton extends StatelessWidget {
         width: double.infinity,
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.tertiary,
-              ],
-            ),
+            gradient: AppTheme.brandGradient(context),
             borderRadius: BorderRadius.circular(30),
           ),
           child: Material(

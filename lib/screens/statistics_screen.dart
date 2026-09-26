@@ -98,8 +98,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 )
                 .fold<double>(0, (sum, e) => sum + e.amount);
             final double? trendPercent = previousMonthTotal > 0
-                ? ((monthTotal - previousMonthTotal) / previousMonthTotal) *
-                      100
+                ? ((monthTotal - previousMonthTotal) / previousMonthTotal) * 100
                 : null;
 
             final maxMonthlyTotal = monthlyTotals
@@ -157,15 +156,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   children: [
                                     PieChart(
                                       PieChartData(
-                                        sections: sortedCategories.map((
-                                          entry,
-                                        ) {
+                                        sections: sortedCategories.map((entry) {
                                           final style = CategoryStyles.of(
                                             entry.key,
                                           );
                                           return PieChartSectionData(
                                             value: entry.value,
-                                            color: style.color,
+                                            color: style.color(context),
                                             title: '',
                                             radius: 22,
                                           );
@@ -191,8 +188,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                           'toplam ₺',
                                           style: TextStyle(
                                             fontSize: 10,
-                                            color:
-                                                colorScheme.onSurfaceVariant,
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -203,12 +199,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: sortedCategories.map((entry) {
-                                    final style = CategoryStyles.of(
-                                      entry.key,
-                                    );
+                                    final style = CategoryStyles.of(entry.key);
                                     final percent =
                                         (entry.value / monthTotal * 100)
                                             .round();
@@ -222,7 +215,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                             width: 8,
                                             height: 8,
                                             decoration: BoxDecoration(
-                                              color: style.color,
+                                              color: style.color(context),
                                               shape: BoxShape.circle,
                                             ),
                                           ),
@@ -332,15 +325,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                         return const SizedBox();
                                       }
                                       return Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 6,
-                                        ),
+                                        padding: const EdgeInsets.only(top: 6),
                                         child: Text(
                                           monthlyTotals[index].label,
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color:
-                                                colorScheme.onSurfaceVariant,
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       );

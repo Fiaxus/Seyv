@@ -36,6 +36,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final style = CategoryStyles.of(widget.categoryName);
+    final color = style.color(context);
     final now = DateTime.now();
 
     return Scaffold(
@@ -109,7 +110,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: style.color.withValues(alpha: 0.12),
+                      color: color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
@@ -119,10 +120,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: style.color.withValues(alpha: 0.2),
+                            color: color.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(style.icon, color: style.color),
+                          child: Icon(style.icon, color: color),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -188,7 +189,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                 location: expense.location,
                                 date: expense.date,
                                 amount: expense.amount,
-                                accentColor: style.color,
+                                accentColor: color,
                                 originalCurrency: expense.currency,
                                 originalAmount: expense.originalAmount,
                               );
