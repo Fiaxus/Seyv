@@ -7,6 +7,8 @@ import 'package:harcama_takip_uygulamasi/widgets/app_gradient_button.dart';
 import 'package:harcama_takip_uygulamasi/widgets/app_text_field.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
+import '../../utils/auth_error_translator.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,6 +20,80 @@ class _LoginScreenState extends State<LoginScreen> {
   final formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  Future<void> _showForgotPasswordDialog(BuildContext context) async {
+    final controller = TextEditingController(text: emailController.text);
+    bool showError = false;
+
+    final email = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Şifremi Unuttum'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Şifre sıfırlama bağlantısı gönderilecek e-posta adresini girin.',
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: 'ornek@mail.com',
+                      errorText: showError ? 'Geçerli bir e-posta girin' : null,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final value = controller.text.trim();
+                    if (value.isEmpty || !value.contains('@')) {
+                      setDialogState(() {
+                        showError = true;
+                      });
+                      return;
+                    }
+                    Navigator.of(context).pop(value);
+                  },
+                  child: const Text('Gönder'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (email == null || !context.mounted) return;
+
+    try {
+      await context.read<AuthCubit>().sendPasswordResetEmail(email: email);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Şifre sıfırlama bağlantısı e-postanıza gönderildi.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(translateAuthError(e))),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,9 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          //şifre sıfırlama
-                        },
+                        onPressed: () => _showForgotPasswordDialog(context),
                         child: const Text(
                           'Şifremi unuttum',
                           style: TextStyle(fontSize: 16),
