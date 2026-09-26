@@ -8,10 +8,12 @@ import '../blocs/expense/expense_cubit.dart';
 import '../blocs/expense/expense_state.dart';
 import '../blocs/budget/budget_cubit.dart';
 import '../blocs/budget/budget_state.dart';
+import '../models/budget_plan.dart';
 import '../models/category_data.dart';
 import '../models/expense.dart';
 import '../models/transaction_data.dart';
 import '../repositories/user_repository.dart';
+import '../theme/app_theme.dart';
 import '../utils/category_style.dart';
 import '../widgets/category_card.dart';
 import '../widgets/transaction_tile.dart';
@@ -64,10 +66,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: BlocBuilder<BudgetCubit, BudgetState>(
           builder: (context, budgetState) {
-            double budgetAmount = 0;
+            BudgetPlan plan = BudgetPlan.empty;
             if (budgetState is BudgetLoaded) {
-              budgetAmount = budgetState.amount;
+              plan = budgetState.plan;
             }
+            final budgetAmount = plan.monthly;
 
             return BlocBuilder<ExpenseCubit, ExpenseState>(
               builder: (context, state) {
@@ -131,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       categoryName: entry.key,
                       amount: entry.value,
                       accentColor: style.color,
+                      limit: plan.limitFor(entry.key),
                     );
                   }).toList();
 
@@ -227,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             end: Alignment.bottomRight,
                             colors: [
                               Theme.of(context).colorScheme.primary,
-                              const Color(0xFF0D2B2B),
+                              AppTheme.heroDark,
                             ],
                           ),
                           borderRadius: BorderRadius.circular(20),

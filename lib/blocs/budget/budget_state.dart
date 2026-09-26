@@ -1,3 +1,5 @@
+import '../../models/budget_plan.dart';
+
 sealed class BudgetState {}
 
 class BudgetInitial extends BudgetState {}
@@ -5,9 +7,9 @@ class BudgetInitial extends BudgetState {}
 class BudgetLoading extends BudgetState {}
 
 class BudgetLoaded extends BudgetState {
-  final double amount;
+  final BudgetPlan plan;
 
-  BudgetLoaded(this.amount);
+  BudgetLoaded(this.plan);
 }
 
 class BudgetError extends BudgetState {

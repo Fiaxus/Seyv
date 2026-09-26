@@ -12,14 +12,25 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Limit varsa bar = harcama / limit. Limit yoksa bar boş ve soluk.
+    final limit = category.limit;
+    final hasLimit = limit != null && limit > 0;
+    final double progress = (limit != null && limit > 0)
+        ? (category.amount / limit).clamp(0.0, 1.0)
+        : 0.0;
+    final isOver = limit != null && limit > 0 && category.amount > limit;
+    final barColor = isOver ? colorScheme.error : category.accentColor;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
+          border: Border.all(color: colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +49,7 @@ class CategoryCard extends StatelessWidget {
               category.categoryName,
               style: TextStyle(
                 fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 2),
@@ -50,12 +61,15 @@ class CategoryCard extends StatelessWidget {
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              height: 4,
-              decoration: BoxDecoration(
-                color: category.accentColor,
-                borderRadius: BorderRadius.circular(2),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 4,
+                backgroundColor: hasLimit
+                    ? category.accentColor.withValues(alpha: 0.15)
+                    : colorScheme.outline,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor),
               ),
             ),
           ],

@@ -1,13 +1,14 @@
+import '../models/budget_plan.dart';
 import '../services/budget_service.dart';
 
 class BudgetRepository {
   final BudgetService _service = BudgetService();
 
-  Stream<double> getBudget(String userId) {
-    return _service.getBudget(userId);
+  Stream<BudgetPlan> getPlan(String userId) {
+    return _service.getPlan(userId);
   }
 
-  Future<void> setBudget(String userId, double amount) {
-    return _service.setBudget(userId, amount);
+  Future<void> savePlan(String userId, BudgetPlan plan) {
+    return _service.savePlan(userId, plan);
   }
 }

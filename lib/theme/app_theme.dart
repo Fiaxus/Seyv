@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
+  /// Ana ekrandaki bütçe kartı ve Bütçe Planı kartındaki gradient'in koyu
+  /// ucu. Paletteki foreground (açık tema) rengi. Kart her iki temada da
+  /// koyu kaldığı için tema'dan bağımsız sabit.
+  static const heroDark = Color(0xFF10312D);
+
   static final lightColorScheme = ColorScheme.light(
     primary: const Color(0xFF08A88A),
     tertiary: const Color(0xFF4FE3C1),

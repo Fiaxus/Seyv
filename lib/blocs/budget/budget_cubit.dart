@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../models/budget_plan.dart';
 import '../../repositories/budget_repository.dart';
 import 'budget_state.dart';
 
+/// Firestore'daki KAYITLI bütçe planını dinler (global).
+/// Düzenleme taslağı BudgetPlanCubit'te tutulur.
 class BudgetCubit extends Cubit<BudgetState> {
   final BudgetRepository _repository = BudgetRepository();
-  StreamSubscription<double>? _subscription;
+  StreamSubscription<BudgetPlan>? _subscription;
 
   BudgetCubit() : super(BudgetInitial());
 
@@ -15,22 +18,14 @@ class BudgetCubit extends Cubit<BudgetState> {
     emit(BudgetLoading());
 
     _subscription?.cancel();
-    _subscription = _repository.getBudget(userId).listen(
-      (amount) {
-        emit(BudgetLoaded(amount));
+    _subscription = _repository.getPlan(userId).listen(
+      (plan) {
+        emit(BudgetLoaded(plan));
       },
       onError: (error) {
         emit(BudgetError(error.toString()));
       },
     );
-  }
-
-  Future<void> updateBudget(String userId, double amount) async {
-    try {
-      await _repository.setBudget(userId, amount);
-    } catch (e) {
-      emit(BudgetError(e.toString()));
-    }
   }
 
   @override

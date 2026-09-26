@@ -1,8 +1,14 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/login_screen.dart';
 import 'package:harcama_takip_uygulamasi/screens/auth/register_screen.dart';
 
+import '../blocs/budget/budget_cubit.dart';
+import '../blocs/budget/budget_state.dart';
+import '../blocs/budget_plan/budget_plan_cubit.dart';
+import '../models/budget_plan.dart';
 import '../models/expense.dart';
+import '../screens/budget_plan_screen.dart';
 import '../screens/main_shell.dart';
 import '../screens/expense_add_screen.dart';
 import '../screens/category_detail_screen.dart';
@@ -34,6 +40,21 @@ final router = GoRouter(
     GoRoute(
       path: '/exchange-rates',
       builder: (context, state) => const ExchangeRatesScreen(),
+    ),
+    GoRoute(
+      path: '/budget-plan',
+      builder: (context, state) {
+        // Taslak, kayıtlı planın o anki kopyasıyla başlar.
+        final budgetState = context.read<BudgetCubit>().state;
+        final initial = budgetState is BudgetLoaded
+            ? budgetState.plan
+            : BudgetPlan.empty;
+
+        return BlocProvider(
+          create: (_) => BudgetPlanCubit(initial),
+          child: const BudgetPlanScreen(),
+        );
+      },
     ),
   ],
 );

@@ -42,60 +42,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _editBudget(BuildContext context) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
-
-    final controller = TextEditingController();
-    bool showError = false;
-
-    final result = await showDialog<double>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Aylık Bütçe'),
-              content: TextField(
-                controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Örn: 20000',
-                  errorText: showError ? 'Geçerli bir tutar girin' : null,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Vazgeç'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final value = double.tryParse(
-                      controller.text.replaceAll(',', '.'),
-                    );
-                    if (value == null || value <= 0) {
-                      setDialogState(() {
-                        showError = true;
-                      });
-                      return;
-                    }
-                    Navigator.of(context).pop(value);
-                  },
-                  child: const Text('Kaydet'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result != null) {
-      await context.read<BudgetCubit>().updateBudget(userId, result);
-    }
+  /// "Nafi Berkay Şahin" -> "NB"
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   String _themeLabel(ThemeMode mode) {
@@ -439,7 +395,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final email = FirebaseAuth.instance.currentUser?.email ?? '';
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email ?? '';
+    final isVerified = user?.emailVerified ?? false;
 
     return Scaffold(
       body: SafeArea(
@@ -467,62 +425,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: colorScheme.outline),
                 ),
-                child: Row(
-                  children: [
-                    FutureBuilder<String?>(
-                      future: _nameFuture,
-                      builder: (context, snapshot) {
-                        final name = snapshot.data ?? '';
-                        final initials = name.trim().isNotEmpty
-                            ? name.trim()[0].toUpperCase()
-                            : '?';
-                        return CircleAvatar(
-                          radius: 24,
+                child: FutureBuilder<String?>(
+                  future: _nameFuture,
+                  builder: (context, snapshot) {
+                    final name = snapshot.data ?? '';
+                    return Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
                           backgroundColor: colorScheme.primary,
                           child: Text(
-                            initials,
+                            _initials(name),
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FutureBuilder<String?>(
-                            future: _nameFuture,
-                            builder: (context, snapshot) {
-                              final name = snapshot.data;
-                              return Text(
-                                (name == null || name.isEmpty)
-                                    ? 'İsimsiz Kullanıcı'
-                                    : name,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name.isEmpty ? 'İsimsiz Kullanıcı' : name,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 16,
                                 ),
-                              );
-                            },
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                email,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              _VerifiedBadge(isVerified: isVerified),
+                            ],
                           ),
-                          Text(
-                            email,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
@@ -565,70 +516,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Ayarlar listesi
-              _SettingsTile(
-                icon: Icons.edit_outlined,
-                label: 'Profili düzenle',
-                onTap: () => _editProfile(context),
-              ),
-              _SettingsTile(
-                icon: Icons.key_outlined,
-                label: 'Şifre değiştir',
-                onTap: () => _showComingSoon(context),
-              ),
-              BlocBuilder<BudgetCubit, BudgetState>(
-                builder: (context, state) {
-                  String trailing = '—';
-                  if (state is BudgetLoaded) {
-                    trailing = NumberFormat.currency(
-                      locale: 'tr_TR',
-                      symbol: '₺',
-                    ).format(state.amount);
-                  }
-                  return _SettingsTile(
-                    icon: Icons.account_balance_wallet_outlined,
-                    label: 'Aylık bütçe',
-                    trailing: trailing,
-                    onTap: () => _editBudget(context),
-                  );
-                },
-              ),
-              _SettingsTile(
-                icon: Icons.currency_exchange,
-                label: 'Döviz Kurları',
-                onTap: () => context.push('/exchange-rates'),
-              ),
-              BlocBuilder<ThemeCubit, ThemeMode>(
-                builder: (context, mode) {
-                  return _SettingsTile(
-                    icon: Icons.dark_mode_outlined,
-                    label: 'Tema',
-                    trailing: _themeLabel(mode),
-                    onTap: () => _pickTheme(context),
-                  );
-                },
+              // Ayarlar listesi (tek kart, satırlar arası çizgi)
+              Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: colorScheme.outline),
+                ),
+                child: Column(
+                  children: [
+                    _SettingsRow(
+                      icon: Icons.edit_outlined,
+                      label: 'Profili düzenle',
+                      onTap: () => _editProfile(context),
+                    ),
+                    const _RowDivider(),
+                    _SettingsRow(
+                      icon: Icons.key_outlined,
+                      label: 'Şifre değiştir',
+                      onTap: () => _showComingSoon(context),
+                    ),
+                    const _RowDivider(),
+                    BlocBuilder<BudgetCubit, BudgetState>(
+                      builder: (context, state) {
+                        String trailing = '—';
+                        if (state is BudgetLoaded) {
+                          final plan = state.plan;
+                          trailing = plan.hasMonthly
+                              ? '${NumberFormat.decimalPattern('tr_TR').format(plan.monthly.round())} ₺'
+                                    ' · ${plan.limitedCategoryCount} kategori'
+                              : 'Belirlenmedi';
+                        }
+                        return _SettingsRow(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: 'Bütçe planı',
+                          trailing: trailing,
+                          onTap: () => context.push('/budget-plan'),
+                        );
+                      },
+                    ),
+                    const _RowDivider(),
+                    _SettingsRow(
+                      icon: Icons.currency_exchange,
+                      label: 'Döviz kurları',
+                      onTap: () => context.push('/exchange-rates'),
+                    ),
+                    const _RowDivider(),
+                    BlocBuilder<ThemeCubit, ThemeMode>(
+                      builder: (context, mode) {
+                        return _SettingsRow(
+                          icon: Icons.dark_mode_outlined,
+                          label: 'Tema',
+                          trailing: _themeLabel(mode),
+                          onTap: () => _pickTheme(context),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
               // Çıkış Yap
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () async {
-                    await context.read<AuthCubit>().signOut();
-                    if (context.mounted) {
-                      context.go('/login');
-                    }
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.error,
-                    side: BorderSide(color: colorScheme.error),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+              GestureDetector(
+                onTap: () async {
+                  await context.read<AuthCubit>().signOut();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: colorScheme.error.withValues(alpha: 0.4),
                     ),
                   ),
-                  child: const Text('Çıkış Yap'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout, size: 18, color: colorScheme.error),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Çıkış Yap',
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -659,6 +640,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
+class _VerifiedBadge extends StatelessWidget {
+  final bool isVerified;
+
+  const _VerifiedBadge({required this.isVerified});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = isVerified ? colorScheme.primary : colorScheme.secondary;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        isVerified ? 'Doğrulanmış hesap' : 'Doğrulanmamış hesap',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -669,10 +678,10 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: colorScheme.outline),
       ),
       child: Column(
@@ -682,10 +691,10 @@ class _StatCard extends StatelessWidget {
             label,
             style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
           ),
         ],
       ),
@@ -693,13 +702,13 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _SettingsTile extends StatelessWidget {
+class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String? trailing;
   final VoidCallback onTap;
 
-  const _SettingsTile({
+  const _SettingsRow({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -710,40 +719,61 @@ class _SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colorScheme.outline),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
-            const SizedBox(width: 12),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.onSurface.withValues(alpha: 0.06),
+              ),
+              child: Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(width: 14),
             Expanded(
-              child: Text(label, style: const TextStyle(fontSize: 14)),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             if (trailing != null)
               Text(
                 trailing!,
                 style: TextStyle(
                   fontSize: 13,
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Icon(
               Icons.chevron_right,
-              size: 18,
+              size: 20,
               color: colorScheme.onSurfaceVariant,
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RowDivider extends StatelessWidget {
+  const _RowDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      color: Theme.of(context).colorScheme.outline,
     );
   }
 }
