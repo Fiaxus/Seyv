@@ -21,7 +21,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final Future<String?> _nameFuture;
+  late Future<String?> _nameFuture;
 
   @override
   void initState() {
@@ -138,6 +138,184 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<String?> _askForPassword(
+    BuildContext context, {
+    required String reason,
+  }) async {
+    final controller = TextEditingController();
+    bool showError = false;
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Şifreni Doğrula'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(reason),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Şifre',
+                      errorText: showError ? 'Şifre boş olamaz' : null,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (controller.text.isEmpty) {
+                      setDialogState(() {
+                        showError = true;
+                      });
+                      return;
+                    }
+                    Navigator.of(context).pop(controller.text);
+                  },
+                  child: const Text('Onayla'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _editProfile(BuildContext context) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final currentName = await _nameFuture ?? '';
+    final currentEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+    if (!context.mounted) return;
+
+    final nameController = TextEditingController(text: currentName);
+    final emailController = TextEditingController(text: currentEmail);
+    String? nameError;
+    String? emailError;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Profili Düzenle'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Ad Soyad',
+                      errorText: nameError,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'E-posta',
+                      errorText: emailError,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Vazgeç'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    final email = emailController.text.trim();
+                    setDialogState(() {
+                      nameError = name.isEmpty ? 'Ad Soyad boş olamaz' : null;
+                      emailError = (email.isEmpty || !email.contains('@'))
+                          ? 'Geçerli bir e-posta girin'
+                          : null;
+                    });
+                    if (nameError == null && emailError == null) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
+                  child: const Text('Kaydet'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final newName = nameController.text.trim();
+    final newEmail = emailController.text.trim();
+    final authCubit = context.read<AuthCubit>();
+    final nameChanged = newName != currentName;
+    final emailChanged = newEmail != currentEmail;
+
+    // İsim değişikliği: anında kaydedilir, doğrulama gerekmez
+    if (nameChanged) {
+      await UserRepository().setName(userId, newName);
+      setState(() {
+        _nameFuture = Future.value(newName);
+      });
+    }
+
+    // E-posta değişikliği: şifre doğrulaması + yeni adrese doğrulama e-postası
+    if (emailChanged) {
+      final password = await _askForPassword(
+        context,
+        reason:
+            'Güvenlik nedeniyle, e-postanı değiştirmeden önce şifreni '
+            'tekrar girmen gerekiyor.',
+      );
+      if (password == null || !context.mounted) return;
+
+      try {
+        await authCubit.reauthenticate(password: password);
+        await authCubit.updateEmail(newEmail: newEmail);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Doğrulama bağlantısı $newEmail adresine gönderildi. '
+                'E-postanızın değişmesi için bağlantıya tıklamanız gerekiyor.',
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(translateAuthError(e))),
+          );
+        }
+      }
+    } else if (nameChanged && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil güncellendi.')),
+      );
+    }
+  }
+
   Future<bool> _confirmDeleteAccount(BuildContext context) async {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -216,66 +394,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return result ?? false;
   }
 
-  Future<String?> _askForPassword(BuildContext context) async {
-    final controller = TextEditingController();
-    bool showError = false;
-
-    return showDialog<String>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Şifreni Doğrula'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Güvenlik nedeniyle, hesabını silmeden önce şifreni '
-                    'tekrar girmen gerekiyor.',
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: controller,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Şifre',
-                      errorText: showError ? 'Şifre boş olamaz' : null,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Vazgeç'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (controller.text.isEmpty) {
-                      setDialogState(() {
-                        showError = true;
-                      });
-                      return;
-                    }
-                    Navigator.of(context).pop(controller.text);
-                  },
-                  child: const Text('Onayla'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   Future<void> _deleteAccount(BuildContext context) async {
     final confirmed = await _confirmDeleteAccount(context);
     if (!confirmed || !context.mounted) return;
 
-    final password = await _askForPassword(context);
+    final password = await _askForPassword(
+      context,
+      reason:
+          'Güvenlik nedeniyle, hesabını silmeden önce şifreni tekrar '
+          'girmen gerekiyor.',
+    );
     if (password == null || !context.mounted) return;
 
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -441,7 +569,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _SettingsTile(
                 icon: Icons.edit_outlined,
                 label: 'Profili düzenle',
-                onTap: () => _showComingSoon(context),
+                onTap: () => _editProfile(context),
               ),
               _SettingsTile(
                 icon: Icons.key_outlined,

@@ -26,4 +26,8 @@ class AuthRepository {
   Future<void> deleteAccount() async {
     await _authService.deleteAccount();
   }
+
+  Future<void> updateEmail({required String newEmail}) async {
+    await _authService.updateEmail(newEmail: newEmail);
+  }
 }

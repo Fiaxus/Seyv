@@ -48,3 +48,16 @@ app.*.map.json
 .widget_preview/
 
 android/app/google-services.json
+
+# Firebase config
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+
+# Release imzalama
+*.jks
+*.keystore
+android/key.properties
+
+# Ortam değişkenleri
+.env

@@ -1,4 +1,4 @@
-package com.example.harcama_takip_uygulamasi
+package com.seyv.app
 
 import io.flutter.embedding.android.FlutterActivity
 

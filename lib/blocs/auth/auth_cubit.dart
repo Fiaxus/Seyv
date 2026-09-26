@@ -50,4 +50,8 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> deleteAccount() {
     return _authRepository.deleteAccount();
   }
+
+  Future<void> updateEmail({required String newEmail}) {
+    return _authRepository.updateEmail(newEmail: newEmail);
+  }
 }

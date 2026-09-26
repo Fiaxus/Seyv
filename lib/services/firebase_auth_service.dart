@@ -40,4 +40,10 @@ class FirebaseAuthService {
     if (user == null) return;
     await user.delete();
   }
+
+  Future<void> updateEmail({required String newEmail}) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+    await user.verifyBeforeUpdateEmail(newEmail);
+  }
 }
