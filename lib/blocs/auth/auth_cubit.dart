@@ -42,4 +42,12 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> sendPasswordResetEmail({required String email}) {
     return _authRepository.sendPasswordResetEmail(email: email);
   }
+
+  Future<void> reauthenticate({required String password}) {
+    return _authRepository.reauthenticate(password: password);
+  }
+
+  Future<void> deleteAccount() {
+    return _authRepository.deleteAccount();
+  }
 }

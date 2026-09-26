@@ -31,4 +31,16 @@ class FirestoreService {
   Future<void> updateExpense(Expense expense) async {
     await _expensesRef.doc(expense.id).update(expense.toMap());
   }
+
+  Future<void> deleteAllExpensesForUser(String userId) async {
+    final snapshot = await _expensesRef
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
 }

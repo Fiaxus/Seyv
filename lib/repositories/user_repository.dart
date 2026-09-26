@@ -10,4 +10,8 @@ class UserRepository {
   Future<String?> getName(String userId) {
     return _service.getName(userId);
   }
+
+  Future<void> deleteUser(String userId) {
+    return _service.deleteUser(userId);
+  }
 }

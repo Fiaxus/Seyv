@@ -24,4 +24,20 @@ class FirebaseAuthService {
   Future<void> sendPasswordResetEmail({required String email}) async {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
+
+  Future<void> reauthenticate({required String password}) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null || user.email == null) return;
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+    await user.reauthenticateWithCredential(credential);
+  }
+
+  Future<void> deleteAccount() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+    await user.delete();
+  }
 }

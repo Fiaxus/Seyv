@@ -16,4 +16,8 @@ class UserService {
     if (data == null) return null;
     return data['name'] as String?;
   }
+
+  Future<void> deleteUser(String userId) async {
+    await _userDoc(userId).delete();
+  }
 }

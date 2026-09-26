@@ -16,14 +16,16 @@ class ExpenseCubit extends Cubit<ExpenseState> {
     emit(ExpenseLoading());
 
     _subscription?.cancel();
-    _subscription = _repository.getExpenses(userId).listen(
-      (expenses) {
-        emit(ExpenseLoaded(expenses));
-      },
-      onError: (error) {
-        emit(ExpenseError(error.toString()));
-      },
-    );
+    _subscription = _repository
+        .getExpenses(userId)
+        .listen(
+          (expenses) {
+            emit(ExpenseLoaded(expenses));
+          },
+          onError: (error) {
+            emit(ExpenseError(error.toString()));
+          },
+        );
   }
 
   Future<void> addExpense(Expense expense) {
@@ -36,6 +38,10 @@ class ExpenseCubit extends Cubit<ExpenseState> {
 
   Future<void> deleteExpense(String expenseId) {
     return _repository.deleteExpense(expenseId);
+  }
+
+  Future<void> deleteAllExpensesForUser(String userId) {
+    return _repository.deleteAllExpensesForUser(userId);
   }
 
   @override

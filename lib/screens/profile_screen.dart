@@ -11,6 +11,7 @@ import '../blocs/expense/expense_cubit.dart';
 import '../blocs/expense/expense_state.dart';
 import '../blocs/theme/theme_cubit.dart';
 import '../repositories/user_repository.dart';
+import '../utils/auth_error_translator.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -137,6 +138,176 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<bool> _confirmDeleteAccount(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: colorScheme.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: colorScheme.error,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Hesabı Sil',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            'Hesabınızı ve tüm harcama verilerinizi kalıcı olarak silmek '
+            'istediğinize emin misiniz? Bu işlem geri alınamaz.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.onSurface,
+                  side: BorderSide(color: colorScheme.outline),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Vazgeç'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.error,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text('Sil'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  Future<String?> _askForPassword(BuildContext context) async {
+    final controller = TextEditingController();
+    bool showError = false;
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Şifreni Doğrula'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Güvenlik nedeniyle, hesabını silmeden önce şifreni '
+                    'tekrar girmen gerekiyor.',
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Şifre',
+                      errorText: showError ? 'Şifre boş olamaz' : null,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Vazgeç'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (controller.text.isEmpty) {
+                      setDialogState(() {
+                        showError = true;
+                      });
+                      return;
+                    }
+                    Navigator.of(context).pop(controller.text);
+                  },
+                  child: const Text('Onayla'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    final confirmed = await _confirmDeleteAccount(context);
+    if (!confirmed || !context.mounted) return;
+
+    final password = await _askForPassword(context);
+    if (password == null || !context.mounted) return;
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final expenseCubit = context.read<ExpenseCubit>();
+    final authCubit = context.read<AuthCubit>();
+
+    try {
+      // 1) Önce kimlik doğrulamasını tazele — bundan sonraki hiçbir
+      // adım "requires-recent-login" hatasıyla yarıda kesilmez.
+      await authCubit.reauthenticate(password: password);
+
+      // 2) Kimlik doğrulandıktan sonra asıl silme işlemlerine geç.
+      await expenseCubit.deleteAllExpensesForUser(userId);
+      await UserRepository().deleteUser(userId);
+      await authCubit.deleteAccount();
+
+      if (context.mounted) {
+        context.go('/login');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hesap silinemedi: ${translateAuthError(e)}'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -145,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -330,6 +501,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   child: const Text('Çıkış Yap'),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Hesabı Sil
+              Center(
+                child: TextButton.icon(
+                  onPressed: () => _deleteAccount(context),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  label: Text(
+                    'Hesabı Sil',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
             ],

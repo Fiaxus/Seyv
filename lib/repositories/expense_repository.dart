@@ -19,4 +19,8 @@ class ExpenseRepository {
   Future<void> updateExpense(Expense expense) {
     return _firestoreService.updateExpense(expense);
   }
+
+  Future<void> deleteAllExpensesForUser(String userId) {
+    return _firestoreService.deleteAllExpensesForUser(userId);
+  }
 }

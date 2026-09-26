@@ -18,4 +18,12 @@ class AuthRepository {
   Future<void> sendPasswordResetEmail({required String email}) async {
     await _authService.sendPasswordResetEmail(email: email);
   }
+
+  Future<void> reauthenticate({required String password}) async {
+    await _authService.reauthenticate(password: password);
+  }
+
+  Future<void> deleteAccount() async {
+    await _authService.deleteAccount();
+  }
 }
