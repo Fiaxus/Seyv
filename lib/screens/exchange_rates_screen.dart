@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 import '../blocs/exchange_rate/exchange_rate_cubit.dart';
 import '../blocs/exchange_rate/exchange_rate_state.dart';
+import '../theme/app_theme.dart';
 
 class _CurrencyInfo {
   final String code;
@@ -22,6 +24,11 @@ const _currencies = [
 ];
 
 final _tryFormat = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+final _amountFormat = NumberFormat.currency(
+  locale: 'tr_TR',
+  symbol: '',
+  decimalDigits: 2,
+);
 
 class ExchangeRatesScreen extends StatefulWidget {
   const ExchangeRatesScreen({super.key});
@@ -33,7 +40,6 @@ class ExchangeRatesScreen extends StatefulWidget {
 class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
   DateTime? _lastUpdated;
 
-  // Hızlı çevirici
   final _amountController = TextEditingController(text: '1');
   _CurrencyInfo _selectedCurrency = _currencies.first;
 
@@ -63,8 +69,8 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
       context: context,
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: ListView(
+            shrinkWrap: true,
             children: [
               for (final currency in _currencies)
                 ListTile(
@@ -96,7 +102,6 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Başlık
               Row(
                 children: [
                   GestureDetector(
@@ -149,7 +154,6 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Hızlı çevirici + kur listesi
               BlocBuilder<ExchangeRateCubit, ExchangeRateState>(
                 builder: (context, state) {
                   if (state is ExchangeRateLoading ||
@@ -198,28 +202,28 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
                           decoration: BoxDecoration(
                             color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: colorScheme.outline),
+                            boxShadow: AppTheme.cardShadow(context),
                           ),
                           child: Row(
                             children: [
                               CircleAvatar(
                                 radius: 18,
-                                backgroundColor: colorScheme.primary
-                                    .withValues(alpha: 0.15),
+                                backgroundColor: AppTheme.mutedBackground(
+                                  context,
+                                ),
                                 child: Text(
                                   currency.code,
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
-                                    color: colorScheme.primary,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       currency.name,
@@ -240,9 +244,7 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
                               ),
                               Text(
                                 rates[currency.code] != null
-                                    ? _tryFormat.format(
-                                        rates[currency.code],
-                                      )
+                                    ? _tryFormat.format(rates[currency.code])
                                     : '—',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -263,8 +265,6 @@ class _ExchangeRatesScreenState extends State<ExchangeRatesScreen> {
     );
   }
 }
-
-// ---------- Hızlı çevirici ----------
 
 class _QuickConverter extends StatefulWidget {
   final TextEditingController amountController;
@@ -312,22 +312,22 @@ class _QuickConverterState extends State<_QuickConverter> {
     final colorScheme = Theme.of(context).colorScheme;
 
     final amount =
-        double.tryParse(widget.amountController.text.replaceAll(',', '.')) ??
-        0;
+        double.tryParse(widget.amountController.text.replaceAll(',', '.')) ?? 0;
     final result = widget.rate != null ? amount * widget.rate! : null;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.08),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.cardShadow(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'HIZLI ÇEVİRİCİ',
+            'Hızlı çevirici',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -339,55 +339,39 @@ class _QuickConverterState extends State<_QuickConverter> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Tutar + para birimi
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: colorScheme.outline),
+                    color: AppTheme.mutedBackground(context),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
                         onTap: widget.onTapCurrency,
-                        child: Row(
-                          children: [
-                            Text(
-                              widget.selectedCurrency.code,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 16,
-                              color: colorScheme.primary,
-                            ),
-                          ],
+                        child: Text(
+                          widget.selectedCurrency.code,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 4),
                       TextField(
                         controller: widget.amountController,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'[0-9,]'),
-                          ),
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
                         ],
                         style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
                         ),
                         decoration: const InputDecoration(
                           isDense: true,
@@ -400,31 +384,27 @@ class _QuickConverterState extends State<_QuickConverter> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: colorScheme.primary,
+                  gradient: AppTheme.brandGradient(context),
                 ),
-                child: const Icon(
-                  Icons.arrow_right_alt_rounded,
-                  color: Colors.white,
-                  size: 20,
+                child: Icon(
+                  LucideIcons.arrow_up_right,
+                  color: AppTheme.onBrandGradient(context),
+                  size: 16,
                 ),
               ),
-              const SizedBox(width: 10),
-              // Sonuç
+              const SizedBox(width: 12),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
+                    color: colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,17 +412,18 @@ class _QuickConverterState extends State<_QuickConverter> {
                       Text(
                         'TRY',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        result != null ? _tryFormat.format(result) : '—',
-                        style: const TextStyle(
+                        result != null ? _amountFormat.format(result) : '—',
+                        style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.primary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

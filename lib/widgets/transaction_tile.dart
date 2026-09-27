@@ -18,13 +18,8 @@ class TransactionTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
             Container(
@@ -32,7 +27,7 @@ class TransactionTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: transaction.accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                shape: BoxShape.circle,
               ),
               child: Icon(
                 transaction.icon,

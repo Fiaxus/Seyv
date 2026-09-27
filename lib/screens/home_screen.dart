@@ -27,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final Future<String?> _nameFuture;
+  bool _sortByAmount = false;
 
   @override
   void initState() {
@@ -134,6 +135,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }).toList();
 
+                  if (_sortByAmount) {
+                    categories.sort((a, b) => b.amount.compareTo(a.amount));
+                  }
+
                   recentExpenses = state.expenses.take(3).toList();
                 }
 
@@ -179,9 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   Text(
                                     getGreeting(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
@@ -204,9 +207,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
                                   ),
                                 ),
                                 child: const Icon(
@@ -248,9 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -332,10 +333,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 backgroundColor: Colors.white.withValues(
                                   alpha: 0.2,
                                 ),
-                                valueColor:
-                                    const AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             ),
                           ],
@@ -352,10 +352,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontSize: 16,
                             ),
                           ),
-                          Text(
-                            'Tümü',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _sortByAmount = !_sortByAmount;
+                              });
+                            },
+                            child: Text(
+                              'Sırala',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
                         ],
@@ -399,12 +406,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontSize: 16,
                             ),
                           ),
-                          Text(
-                            'Tümü',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -436,10 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: TransactionTile(
                                 transaction: data,
                                 onTap: () {
-                                  context.push(
-                                    '/expense-add',
-                                    extra: expense,
-                                  );
+                                  context.push('/expense-add', extra: expense);
                                 },
                               ),
                             );

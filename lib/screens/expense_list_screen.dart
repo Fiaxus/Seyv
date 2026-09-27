@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -9,7 +10,10 @@ import '../blocs/expense/expense_state.dart';
 import '../models/expense.dart';
 import '../models/transaction_data.dart';
 import '../utils/category_style.dart';
+import '../widgets/app_gradient_button.dart';
 import '../widgets/transaction_tile.dart';
+
+const Object _clearSelection = Object();
 
 class ExpenseListScreen extends StatefulWidget {
   const ExpenseListScreen({super.key});
@@ -22,6 +26,29 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedCategory;
+  String? _selectedCurrency;
+  DateTime? _selectedMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+  );
+
+  bool get _hasActiveFilters {
+    final defaultMonth = DateTime(DateTime.now().year, DateTime.now().month);
+    final isDefaultMonth = _selectedMonth != null &&
+        _selectedMonth!.year == defaultMonth.year &&
+        _selectedMonth!.month == defaultMonth.month;
+    return !isDefaultMonth ||
+        _selectedCategory != null ||
+        _selectedCurrency != null;
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+      _selectedCategory = null;
+      _selectedCurrency = null;
+    });
+  }
 
   @override
   void initState() {
@@ -124,21 +151,22 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
     BuildContext context,
     List<String> categories,
   ) async {
-    final selected = await showModalBottomSheet<String?>(
+    final result = await showModalBottomSheet<Object?>(
       context: context,
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: ListView(
+            shrinkWrap: true,
             children: [
               ListTile(
                 title: const Text('Tümü'),
-                onTap: () => Navigator.of(context).pop<String?>(null),
+                onTap: () =>
+                    Navigator.of(context).pop<Object?>(_clearSelection),
               ),
               ...categories.map(
                 (category) => ListTile(
                   title: Text(category),
-                  onTap: () => Navigator.of(context).pop<String?>(category),
+                  onTap: () => Navigator.of(context).pop<Object?>(category),
                 ),
               ),
             ],
@@ -146,9 +174,236 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
         );
       },
     );
+    if (result == null) return;
     setState(() {
-      _selectedCategory = selected;
+      _selectedCategory = result == _clearSelection ? null : result as String;
     });
+  }
+
+  Future<void> _pickMonth(
+    BuildContext context,
+    List<DateTime> months,
+  ) async {
+    final result = await showModalBottomSheet<Object?>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              ListTile(
+                title: const Text('Tüm zamanlar'),
+                onTap: () =>
+                    Navigator.of(context).pop<Object?>(_clearSelection),
+              ),
+              ...months.map(
+                (month) => ListTile(
+                  title: Text(DateFormat('MMMM yyyy', 'tr_TR').format(month)),
+                  onTap: () => Navigator.of(context).pop<Object?>(month),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (result == null) return;
+    setState(() {
+      _selectedMonth = result == _clearSelection ? null : result as DateTime;
+    });
+  }
+
+  Future<void> _pickCurrency(
+    BuildContext context,
+    List<String> currencies,
+  ) async {
+    final result = await showModalBottomSheet<Object?>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              ListTile(
+                title: const Text('Tümü'),
+                onTap: () =>
+                    Navigator.of(context).pop<Object?>(_clearSelection),
+              ),
+              ...currencies.map(
+                (currency) => ListTile(
+                  title: Text(currency),
+                  onTap: () => Navigator.of(context).pop<Object?>(currency),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (result == null) return;
+    setState(() {
+      _selectedCurrency = result == _clearSelection ? null : result as String;
+    });
+  }
+
+  Future<void> _openFilterSheet(
+    BuildContext context,
+    List<DateTime> months,
+    List<String> currencies,
+  ) async {
+    DateTime? tempMonth = _selectedMonth;
+    String? tempCategory = _selectedCategory;
+    String? tempCurrency = _selectedCurrency;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final colorScheme = Theme.of(sheetContext).colorScheme;
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Filtrele',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setSheetState(() {
+                                tempMonth = null;
+                                tempCategory = null;
+                                tempCurrency = null;
+                              });
+                            },
+                            child: const Text('Temizle'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ay',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _SheetChip(
+                            label: 'Tüm zamanlar',
+                            selected: tempMonth == null,
+                            onTap: () =>
+                                setSheetState(() => tempMonth = null),
+                          ),
+                          for (final month in months)
+                            _SheetChip(
+                              label: DateFormat(
+                                'MMMM yyyy',
+                                'tr_TR',
+                              ).format(month),
+                              selected: tempMonth != null &&
+                                  tempMonth!.year == month.year &&
+                                  tempMonth!.month == month.month,
+                              onTap: () =>
+                                  setSheetState(() => tempMonth = month),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Kategori',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _SheetChip(
+                            label: 'Tümü',
+                            selected: tempCategory == null,
+                            onTap: () =>
+                                setSheetState(() => tempCategory = null),
+                          ),
+                          for (final category in CategoryStyles.all.keys)
+                            _SheetChip(
+                              label: category,
+                              selected: tempCategory == category,
+                              onTap: () =>
+                                  setSheetState(() => tempCategory = category),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Para birimi',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _SheetChip(
+                            label: 'Tümü',
+                            selected: tempCurrency == null,
+                            onTap: () =>
+                                setSheetState(() => tempCurrency = null),
+                          ),
+                          for (final currency in currencies)
+                            _SheetChip(
+                              label: currency,
+                              selected: tempCurrency == currency,
+                              onTap: () =>
+                                  setSheetState(() => tempCurrency = currency),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      AppGradientButton(
+                        label: 'Uygula',
+                        onPressed: () {
+                          setState(() {
+                            _selectedMonth = tempMonth;
+                            _selectedCategory = tempCategory;
+                            _selectedCurrency = tempCurrency;
+                          });
+                          Navigator.of(sheetContext).pop();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -164,9 +419,37 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
             children: [
               BlocBuilder<ExpenseCubit, ExpenseState>(
                 builder: (context, state) {
-                  final count = state is ExpenseLoaded
-                      ? state.expenses.length
+                  final months = state is ExpenseLoaded
+                      ? (state.expenses
+                              .map((e) => DateTime(e.date.year, e.date.month))
+                              .toSet()
+                              .toList()
+                            ..sort((a, b) => b.compareTo(a)))
+                      : <DateTime>[];
+                  final currencies = state is ExpenseLoaded
+                      ? ({
+                          'TRY',
+                          ...state.expenses.map((e) => e.currency),
+                        }.toList()
+                          ..sort())
+                      : <String>['TRY'];
+
+                  final filteredCount = state is ExpenseLoaded
+                      ? state.expenses.where((e) {
+                          final matchesMonth = _selectedMonth == null ||
+                              (e.date.year == _selectedMonth!.year &&
+                                  e.date.month == _selectedMonth!.month);
+                          final matchesCategory = _selectedCategory == null ||
+                              e.categoryName == _selectedCategory;
+                          final expenseCurrency = e.currency;
+                          final matchesCurrency = _selectedCurrency == null ||
+                              expenseCurrency == _selectedCurrency;
+                          return matchesMonth &&
+                              matchesCategory &&
+                              matchesCurrency;
+                        }).length
                       : 0;
+
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -181,14 +464,33 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                             ),
                           ),
                           Text(
-                            '$count kayıt · '
-                            '${DateFormat('MMMM yyyy', 'tr_TR').format(DateTime.now())}',
+                            '$filteredCount kayıt · '
+                            '${_selectedMonth != null ? DateFormat('MMMM yyyy', 'tr_TR').format(_selectedMonth!) : 'Tüm zamanlar'}',
                             style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
+                      ),
+                      GestureDetector(
+                        onTap: () => _openFilterSheet(
+                          context,
+                          months,
+                          currencies,
+                        ),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: colorScheme.outline),
+                          ),
+                          child: Icon(
+                            LucideIcons.sliders_horizontal,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -213,57 +515,79 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               ),
               const SizedBox(height: 12),
 
-              // Kategori filtre çipi
+              // Filtre çipleri: Ay / Kategori / Para birimi
               BlocBuilder<ExpenseCubit, ExpenseState>(
                 builder: (context, state) {
+                  final months = state is ExpenseLoaded
+                      ? (state.expenses
+                              .map((e) => DateTime(e.date.year, e.date.month))
+                              .toSet()
+                              .toList()
+                            ..sort((a, b) => b.compareTo(a)))
+                      : <DateTime>[];
                   final categories = state is ExpenseLoaded
                       ? state.expenses
                             .map((e) => e.categoryName)
                             .toSet()
                             .toList()
                       : <String>[];
+                  final currencies = state is ExpenseLoaded
+                      ? ({
+                          'TRY',
+                          ...state.expenses.map((e) => e.currency),
+                        }.toList()
+                          ..sort())
+                      : <String>['TRY'];
 
-                  return Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => _pickCategory(context, categories),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _selectedCategory != null
-                                ? colorScheme.primary.withValues(alpha: 0.12)
-                                : colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _selectedCategory ?? 'Kategori',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: _selectedCategory != null
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w600,
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _FilterPill(
+                          label: _selectedMonth != null
+                              ? DateFormat(
+                                  'MMMM yyyy',
+                                  'tr_TR',
+                                ).format(_selectedMonth!)
+                              : 'Tüm zamanlar',
+                          isActive: true,
+                          onTap: () => _pickMonth(context, months),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: _selectedCategory ?? 'Kategori',
+                          isActive: _selectedCategory != null,
+                          onTap: () => _pickCategory(context, categories),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: _selectedCurrency ?? 'Para birimi',
+                          isActive: _selectedCurrency != null,
+                          onTap: () => _pickCurrency(context, currencies),
+                        ),
+                        if (_hasActiveFilters) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _resetFilters,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: colorScheme.error.withValues(
+                                  alpha: 0.12,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.keyboard_arrow_down,
+                              child: Icon(
+                                Icons.close,
                                 size: 16,
-                                color: _selectedCategory != null
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
+                                color: colorScheme.error,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      ],
+                    ),
                   );
                 },
               ),
@@ -281,7 +605,6 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                     }
 
                     if (state is ExpenseLoaded) {
-                      // Filtreleme: arama + kategori
                       var filtered = state.expenses.where((e) {
                         final matchesSearch =
                             _searchQuery.isEmpty ||
@@ -292,7 +615,16 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                         final matchesCategory =
                             _selectedCategory == null ||
                             e.categoryName == _selectedCategory;
-                        return matchesSearch && matchesCategory;
+                        final matchesMonth = _selectedMonth == null ||
+                            (e.date.year == _selectedMonth!.year &&
+                                e.date.month == _selectedMonth!.month);
+                        final expenseCurrency = e.currency;
+                        final matchesCurrency = _selectedCurrency == null ||
+                            expenseCurrency == _selectedCurrency;
+                        return matchesSearch &&
+                            matchesCategory &&
+                            matchesMonth &&
+                            matchesCurrency;
                       }).toList();
 
                       if (filtered.isEmpty) {
@@ -301,19 +633,29 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                         );
                       }
 
-                      // Tarihe göre grupla: gerçek "bugün" ile karşılaştır
                       final now = DateTime.now();
-                      final isSameDay = (DateTime a, DateTime b) =>
-                          a.year == b.year &&
-                          a.month == b.month &&
-                          a.day == b.day;
 
-                      final todayExpenses = filtered
-                          .where((e) => isSameDay(e.date, now))
-                          .toList();
-                      final olderExpenses = filtered
-                          .where((e) => !isSameDay(e.date, now))
-                          .toList();
+                      String groupLabel(DateTime date) {
+                        final isToday = date.year == now.year &&
+                            date.month == now.month &&
+                            date.day == now.day;
+                        if (isToday) return 'BUGÜN';
+                        final isCurrentMonth =
+                            date.year == now.year && date.month == now.month;
+                        if (isCurrentMonth) return 'ÖNCEKİ GÜNLER';
+                        return DateFormat(
+                          'MMMM yyyy',
+                          'tr_TR',
+                        ).format(date).toUpperCase();
+                      }
+
+                      final Map<String, List<Expense>> grouped = {};
+                      for (final expense in filtered) {
+                        grouped
+                            .putIfAbsent(groupLabel(expense.date), () => [])
+                            .add(expense);
+                      }
+                      final groupEntries = grouped.entries.toList();
 
                       Widget buildTile(Expense expense) {
                         final style = CategoryStyles.of(expense.categoryName);
@@ -371,37 +713,33 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
                         );
                       }
 
-                      return ListView(
-                        children: [
-                          if (todayExpenses.isNotEmpty) ...[
-                            Text(
-                              'BUGÜN',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                      return ListView.builder(
+                        itemCount: groupEntries.length,
+                        itemBuilder: (context, index) {
+                          final entry = groupEntries[index];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: index == groupEntries.length - 1
+                                  ? 0
+                                  : 16,
                             ),
-                            const SizedBox(height: 8),
-                            ...todayExpenses.map(buildTile),
-                          ],
-                          if (olderExpenses.isNotEmpty) ...[
-                            if (todayExpenses.isNotEmpty)
-                              const SizedBox(height: 16),
-                            Text(
-                              todayExpenses.isEmpty
-                                  ? 'HARCAMALAR'
-                                  : 'ÖNCEKİ GÜNLER',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.key,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ...entry.value.map(buildTile),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            ...olderExpenses.map(buildTile),
-                          ],
-                        ],
+                          );
+                        },
                       );
                     }
 
@@ -411,6 +749,112 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _FilterPill({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? colorScheme.primary.withValues(alpha: 0.12)
+              : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(20),
+          border: isActive
+              ? Border.all(color: colorScheme.primary.withValues(alpha: 0.4))
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isActive
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: isActive
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SheetChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? colorScheme.primary.withValues(alpha: 0.12)
+              : colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? colorScheme.primary : colorScheme.outline,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              Icon(Icons.check, size: 14, color: colorScheme.primary),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );
