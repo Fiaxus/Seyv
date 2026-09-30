@@ -57,7 +57,7 @@ void main() {
         'categoryName': 'Fatura',
         'description': 'Elektrik',
         'location': '',
-        'date': original_date(),
+        'date': originalDate(),
         'amount': 500.0,
         // currency alanı kasıtlı olarak eksik bırakıldı
       };
@@ -69,4 +69,4 @@ void main() {
     });
   });
 }
-Timestamp original_date() => Timestamp.fromDate(DateTime(2026, 8, 21));
+Timestamp originalDate() => Timestamp.fromDate(DateTime(2026, 8, 21));

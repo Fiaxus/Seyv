@@ -2,19 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_cubit.dart';
 import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_state.dart';
-import 'package:harcama_takip_uygulamasi/core/theme/app_theme.dart';
-import 'package:harcama_takip_uygulamasi/core/utils/category_style.dart';
-
-class _MonthlyTotal {
-  final String label;
-  final double total;
-
-  const _MonthlyTotal(this.label, this.total);
-}
+import 'widgets/category_distribution_card.dart';
+import 'widgets/daily_average_card.dart';
+import 'widgets/six_month_chart_card.dart';
+import 'widgets/top_category_card.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -68,14 +62,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             final sortedCategories = categoryTotals.entries.toList()
               ..sort((a, b) => b.value.compareTo(a.value));
 
-            final topEntry = sortedCategories.isNotEmpty
-                ? sortedCategories.first
-                : null;
-            final topStyle = topEntry != null
-                ? CategoryStyles.of(topEntry.key)
-                : null;
-
-            final List<_MonthlyTotal> monthlyTotals = [];
+            final List<MonthlyTotal> monthlyTotals = [];
             for (int i = 5; i >= 0; i--) {
               final monthDate = DateTime(now.year, now.month - i, 1);
               final total = state.expenses
@@ -86,7 +73,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   )
                   .fold<double>(0, (sum, e) => sum + e.amount);
               monthlyTotals.add(
-                _MonthlyTotal(
+                MonthlyTotal(
                   DateFormat('MMM', 'tr_TR').format(monthDate),
                   total,
                 ),
@@ -105,10 +92,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ? ((monthTotal - previousMonthTotal) / previousMonthTotal) * 100
                 : null;
 
-            final maxMonthlyTotal = monthlyTotals
-                .map((m) => m.total)
-                .fold<double>(0, (a, b) => a > b ? a : b);
-
             return SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -126,347 +109,31 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colorScheme.outline),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kategori dağılımı',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        if (sortedCategories.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Text('Bu ay için harcama verisi yok.'),
-                          )
-                        else
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 130,
-                                height: 130,
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    PieChart(
-                                      PieChartData(
-                                        sections: sortedCategories.map((entry) {
-                                          final style = CategoryStyles.of(
-                                            entry.key,
-                                          );
-                                          return PieChartSectionData(
-                                            value: entry.value,
-                                            color: style.color(context),
-                                            title: '',
-                                            radius: 22,
-                                          );
-                                        }).toList(),
-                                        centerSpaceRadius: 40,
-                                        sectionsSpace: 2,
-                                      ),
-                                    ),
-                                    Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          NumberFormat(
-                                            '#,##0',
-                                            'tr_TR',
-                                          ).format(monthTotal),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        Text(
-                                          'toplam ₺',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: sortedCategories.map((entry) {
-                                    final style = CategoryStyles.of(entry.key);
-                                    final percent =
-                                        (entry.value / monthTotal * 100)
-                                            .round();
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: BoxDecoration(
-                                              color: style.color(context),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              entry.key,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                          Text(
-                                            '%$percent',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
+                  CategoryDistributionCard(
+                    categoryTotals: sortedCategories,
+                    monthTotal: monthTotal,
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: colorScheme.outline),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Son 6 ay',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            if (trendPercent != null)
-                              Row(
-                                children: [
-                                  Icon(
-                                    trendPercent >= 0
-                                        ? Icons.trending_up
-                                        : Icons.trending_down,
-                                    size: 16,
-                                    color: trendPercent >= 0
-                                        ? colorScheme.error
-                                        : colorScheme.primary,
-                                  ),
-                                  Text(
-                                    '%${trendPercent.abs().round()}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: trendPercent >= 0
-                                          ? colorScheme.error
-                                          : colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 140,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              for (
-                                var i = 0;
-                                i < monthlyTotals.length;
-                                i++
-                              ) ...[
-                                Expanded(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Container(
-                                        height: maxMonthlyTotal == 0
-                                            ? 4
-                                            : (monthlyTotals[i].total /
-                                                      maxMonthlyTotal) *
-                                                  100,
-                                        decoration: BoxDecoration(
-                                          gradient:
-                                              i == monthlyTotals.length - 1
-                                              ? AppTheme.brandGradient(context)
-                                              : null,
-                                          color: i == monthlyTotals.length - 1
-                                              ? null
-                                              : colorScheme.primary.withValues(
-                                                  alpha: 0.2,
-                                                ),
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                                top: Radius.circular(20),
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        monthlyTotals[i].label,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (i != monthlyTotals.length - 1)
-                                  const SizedBox(width: 10),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                  SixMonthChartCard(
+                    monthlyTotals: monthlyTotals,
+                    trendPercent: trendPercent,
                   ),
                   const SizedBox(height: 16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: colorScheme.outline),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'En çok harcanan',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              if (topEntry == null || topStyle == null)
-                                const Text('—')
-                              else
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: topStyle
-                                            .color(context)
-                                            .withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        topStyle.icon,
-                                        color: topStyle.color(context),
-                                        size: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            topEntry.key,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          Text(
-                                            NumberFormat.currency(
-                                              locale: 'tr_TR',
-                                              symbol: '₺',
-                                            ).format(topEntry.value),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color:
-                                                  colorScheme.onSurfaceVariant,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          ),
+                        child: TopCategoryCard(
+                          topCategory: sortedCategories.isNotEmpty
+                              ? sortedCategories.first
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: colorScheme.outline),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Günlük ortalama',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                NumberFormat.currency(
-                                  locale: 'tr_TR',
-                                  symbol: '₺',
-                                ).format(monthTotal / now.day),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                              Text(
-                                '${now.day} gün üzerinden',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: DailyAverageCard(
+                          monthTotal: monthTotal,
+                          dayCount: now.day,
                         ),
                       ),
                     ],

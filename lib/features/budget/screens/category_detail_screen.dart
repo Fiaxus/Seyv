@@ -7,8 +7,9 @@ import 'package:intl/intl.dart';
 import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_cubit.dart';
 import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_state.dart';
 import 'package:harcama_takip_uygulamasi/features/expenses/expense.dart';
-import 'package:harcama_takip_uygulamasi/core/models/transaction_data.dart';
+import 'package:harcama_takip_uygulamasi/features/expenses/expense_transaction_data.dart';
 import 'package:harcama_takip_uygulamasi/core/utils/category_style.dart';
+import 'package:harcama_takip_uygulamasi/core/widgets/app_back_header.dart';
 import 'package:harcama_takip_uygulamasi/core/widgets/transaction_tile.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
@@ -70,40 +71,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: colorScheme.outline),
-                          ),
-                          child: const Icon(Icons.arrow_back, size: 20),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.categoryName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          Text(
-                            DateFormat('MMMM yyyy', 'tr_TR').format(now),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  AppBackHeader(
+                    title: widget.categoryName,
+                    subtitle: DateFormat('MMMM yyyy', 'tr_TR').format(now),
                   ),
                   const SizedBox(height: 20),
                   Container(
@@ -182,21 +152,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             itemCount: sorted.length,
                             itemBuilder: (context, index) {
                               final expense = sorted[index];
-                              final data = TransactionData(
-                                icon: style.icon,
-                                categoryName: expense.categoryName,
-                                description: expense.description,
-                                location: expense.location,
-                                date: expense.date,
-                                amount: expense.amount,
-                                accentColor: color,
-                                originalCurrency: expense.currency,
-                                originalAmount: expense.originalAmount,
-                              );
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: TransactionTile(
-                                  transaction: data,
+                                  transaction: expense.toTransactionData(
+                                    context,
+                                  ),
                                   onTap: () {
                                     context.push(
                                       '/expense-add',

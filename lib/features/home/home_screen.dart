@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:go_router/go_router.dart';
 
-import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_cubit.dart';
-import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_state.dart';
+import 'package:harcama_takip_uygulamasi/core/models/category_data.dart';
+import 'package:harcama_takip_uygulamasi/core/utils/category_style.dart';
+import 'package:harcama_takip_uygulamasi/features/budget/budget_plan.dart';
 import 'package:harcama_takip_uygulamasi/features/budget/cubit/budget_cubit.dart';
 import 'package:harcama_takip_uygulamasi/features/budget/cubit/budget_state.dart';
-import 'package:harcama_takip_uygulamasi/features/budget/budget_plan.dart';
-import 'package:harcama_takip_uygulamasi/core/models/category_data.dart';
+import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_cubit.dart';
+import 'package:harcama_takip_uygulamasi/features/expenses/cubit/expense_state.dart';
 import 'package:harcama_takip_uygulamasi/features/expenses/expense.dart';
-import 'package:harcama_takip_uygulamasi/core/models/transaction_data.dart';
 import 'package:harcama_takip_uygulamasi/features/profile/user_repository.dart';
-import 'package:harcama_takip_uygulamasi/core/theme/app_theme.dart';
-import 'package:harcama_takip_uygulamasi/core/utils/category_style.dart';
-import 'package:harcama_takip_uygulamasi/core/widgets/category_card.dart';
-import 'package:harcama_takip_uygulamasi/core/widgets/transaction_tile.dart';
+import 'widgets/balance_card.dart';
+import 'widgets/category_summary_row.dart';
+import 'widgets/greeting_header.dart';
+import 'widgets/recent_expenses_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,24 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 6) {
-      return 'İyi geceler';
-    } else if (hour < 12) {
-      return 'Günaydın';
-    } else if (hour < 18) {
-      return 'İyi günler';
-    } else {
-      return 'İyi akşamlar';
-    }
-  }
-
-  String getCurrentMonthYear() {
-    final now = DateTime.now();
-    return DateFormat('MMMM yyyy', 'tr_TR').format(now);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
             if (budgetState is BudgetLoaded) {
               plan = budgetState.plan;
             }
-            final budgetAmount = plan.monthly;
 
             return BlocBuilder<ExpenseCubit, ExpenseState>(
               builder: (context, state) {
@@ -142,307 +121,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   recentExpenses = state.expenses.take(3).toList();
                 }
 
-                final remaining = budgetAmount - totalAmount;
-                final progress = budgetAmount > 0
-                    ? (totalAmount / budgetAmount).clamp(0.0, 1.0)
-                    : 0.0;
-
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      FutureBuilder<String?>(
-                        future: _nameFuture,
-                        builder: (context, snapshot) {
-                          final name = snapshot.data ?? '';
-                          final initials = name.trim().isNotEmpty
-                              ? name.trim()[0].toUpperCase()
-                              : '?';
-
-                          return Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: AppTheme.brandGradient(context),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  initials,
-                                  style: TextStyle(
-                                    color: AppTheme.onBrandGradient(context),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    getGreeting(),
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.5),
-                                        ),
-                                  ),
-                                  Text(
-                                    name.isEmpty ? 'Kullanıcı' : name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outline,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.notifications_outlined,
-                                  size: 20,
-                                ),
-                              ),
-                            ],
-                          );
+                      GreetingHeader(nameFuture: _nameFuture),
+                      const SizedBox(height: 24),
+                      BalanceCard(
+                        totalAmount: totalAmount,
+                        budgetAmount: plan.monthly,
+                        trendPercent: trendPercent,
+                      ),
+                      const SizedBox(height: 24),
+                      CategorySummaryRow(
+                        categories: categories,
+                        onSortTap: () {
+                          setState(() {
+                            _sortByAmount = !_sortByAmount;
+                          });
                         },
                       ),
                       const SizedBox(height: 24),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.balanceGradient(context),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${getCurrentMonthYear()} · Toplam harcama',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    'TRY',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              NumberFormat.currency(
-                                locale: 'tr_TR',
-                                symbol: '₺',
-                              ).format(totalAmount),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            if (trendPercent != null) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    trendPercent >= 0
-                                        ? Icons.trending_up
-                                        : Icons.trending_down,
-                                    color: Colors.greenAccent[100],
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Geçen aya göre %${trendPercent.abs().round()} '
-                                    '${trendPercent >= 0 ? 'daha fazla' : 'daha az'}',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Aylık bütçe ${NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(budgetAmount)}',
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                Text(
-                                  'Kalan ${NumberFormat.currency(locale: 'tr_TR', symbol: '₺').format(remaining)}',
-                                  style: TextStyle(
-                                    color: remaining < 0
-                                        ? Theme.of(context).colorScheme.error
-                                        : Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: LinearProgressIndicator(
-                                value: progress,
-                                minHeight: 8,
-                                backgroundColor: Colors.white.withValues(
-                                  alpha: 0.2,
-                                ),
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Kategori özeti',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _sortByAmount = !_sortByAmount;
-                              });
-                            },
-                            child: Text(
-                              'Sırala',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (categories.isEmpty)
-                        const Text('Bu ay için kategori verisi yok.')
-                      else
-                        SizedBox(
-                          height: 130,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: categories.length,
-                            itemBuilder: (context, index) {
-                              final data = categories[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: SizedBox(
-                                  width: 110,
-                                  child: CategoryCard(
-                                    category: data,
-                                    onTap: () {
-                                      context.push(
-                                        '/category-detail/${Uri.encodeComponent(data.categoryName)}',
-                                      );
-                                    },
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Son Harcamalar',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (recentExpenses.isEmpty)
-                        const Text('Henüz harcama eklenmedi.')
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: recentExpenses.length,
-                          itemBuilder: (context, index) {
-                            final expense = recentExpenses[index];
-                            final style = CategoryStyles.of(
-                              expense.categoryName,
-                            );
-                            final data = TransactionData(
-                              icon: style.icon,
-                              categoryName: expense.categoryName,
-                              description: expense.description,
-                              location: expense.location,
-                              date: expense.date,
-                              amount: expense.amount,
-                              accentColor: style.color(context),
-                              originalCurrency: expense.currency,
-                              originalAmount: expense.originalAmount,
-                            );
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: TransactionTile(
-                                transaction: data,
-                                onTap: () {
-                                  context.push('/expense-add', extra: expense);
-                                },
-                              ),
-                            );
-                          },
-                        ),
+                      RecentExpensesSection(expenses: recentExpenses),
                     ],
                   ),
                 );

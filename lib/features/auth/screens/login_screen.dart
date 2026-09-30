@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../cubit/auth_cubit.dart';
 import '../cubit/auth_state.dart';
+import '../widgets/forgot_password_dialog.dart';
 import 'package:harcama_takip_uygulamasi/core/widgets/app_gradient_button.dart';
 import 'package:harcama_takip_uygulamasi/core/widgets/app_text_field.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -24,60 +25,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> _showForgotPasswordDialog(BuildContext context) async {
-    final controller = TextEditingController(text: emailController.text);
-    bool showError = false;
-
-    final email = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Şifremi Unuttum'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Şifre sıfırlama bağlantısı gönderilecek e-posta adresini girin.',
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: controller,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      hintText: 'ornek@mail.com',
-                      errorText: showError ? 'Geçerli bir e-posta girin' : null,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Vazgeç'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final value = controller.text.trim();
-                    if (value.isEmpty || !value.contains('@')) {
-                      setDialogState(() {
-                        showError = true;
-                      });
-                      return;
-                    }
-                    Navigator.of(context).pop(value);
-                  },
-                  child: const Text('Gönder'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+    final email = await showForgotPasswordDialog(
+      context,
+      initialEmail: emailController.text,
     );
 
-        if (email == null || !context.mounted) return;
+    if (email == null || !context.mounted) return;
 
     try {
       await context.read<AuthCubit>().sendPasswordResetEmail(email: email);
