@@ -1,50 +1,15 @@
+// Giriş noktası: Firebase ve tarih yerelleştirmesini başlatır, ardından
+// app/app.dart içindeki MyApp'i çalıştırır.
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:harcama_takip_uygulamasi/firebase_options.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'blocs/auth/auth_cubit.dart';
-import 'blocs/expense/expense_cubit.dart';
-import 'blocs/budget/budget_cubit.dart';
-import 'blocs/exchange_rate/exchange_rate_cubit.dart';
-import 'blocs/theme/theme_cubit.dart';
-
-import 'routes/app_router.dart';
-import 'theme/app_theme.dart';
+import 'package:harcama_takip_uygulamasi/app/app.dart';
+import 'package:harcama_takip_uygulamasi/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeDateFormatting('tr_TR', null);
   runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => AuthCubit()),
-        BlocProvider(create: (context) => ExpenseCubit()),
-        BlocProvider(create: (context) => BudgetCubit()),
-        BlocProvider(create: (context) => ExchangeRateCubit()),
-        BlocProvider(create: (context) => ThemeCubit()),
-      ],
-      child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, themeMode) {
-          return MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: 'Harcama Takip Uygulaması',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
-            routerConfig: router,
-          );
-        },
-      ),
-    );
-  }
 }
