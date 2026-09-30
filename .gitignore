@@ -52,12 +52,21 @@ android/app/google-services.json
 # Firebase config
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
+*adminsdk*.json
 
 # Release imzalama
 *.jks
 *.keystore
 android/key.properties
+*.p12
+*.pem
+*.p8
+*.mobileprovision
 
 # Ortam değişkenleri
-.env
+.env*
+
+# Claude Code proje talimatları
+CLAUDE.md

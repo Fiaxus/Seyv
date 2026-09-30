@@ -189,6 +189,8 @@ pubspec.yaml içindeki başlıca bağımlılıklar:
 
 ## Projenin Nasıl Çalıştırılacağı
 
+> **Not:** `lib/firebase_options.dart` ve `android/app/google-services.json` dosyaları repoda yer almaz (`.gitignore`'dadır). Projeyi klonladıktan sonra `flutterfire configure` çalıştırman gerekir; bu komut iki dosyayı da kendi Firebase projen için oluşturur. Çalıştırmadan proje derlenmez.
+
 1. Bağımlılıkları yükle:
 ```
 flutter pub get
