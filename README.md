@@ -11,8 +11,11 @@ Kullanıcı hesap oluşturup giriş yaptıktan sonra:
 - Harcamalarını listeleyebilir, düzenleyebilir, silebilir
 - Kategori bazlı ve aylık istatistiklerini (pasta grafik, 6 aylık çubuk grafik) görebilir
 - Aylık bütçe belirleyip harcamalarını bu bütçeyle karşılaştırabilir
+- Her kategori için ayrı aylık limit belirleyebilir; kategori limitlerinin toplamı aylık bütçeyi aşamaz
 - USD/EUR gibi yabancı para birimleriyle harcama girebilir, uygulama güncel kur üzerinden TL karşılığını otomatik hesaplar
 - Güncel döviz kurlarını (USD, EUR, GBP, CHF) görüntüleyebilir
+- Profil ekranından şifresini değiştirebilir (mevcut şifresini doğrulayarak)
+- Hesabını ve hesabına bağlı tüm harcama verilerini kalıcı olarak silebilir
 
 Her kullanıcının verisi yalnızca kendisine özeldir; bu, hem uygulama kodunda hem Firestore Security Rules ile veritabanı seviyesinde garanti altına alınmıştır.
 
@@ -40,11 +43,29 @@ Her kullanıcının verisi yalnızca kendisine özeldir; bu, hem uygulama kodund
 
 ## Authentication Yapısı
 
+Auth ile ilgili her şey `lib/features/auth/` altındadır:
+
+```
+lib/features/auth/
+  auth_service.dart        -> FirebaseAuthService: firebase_auth ile ham iletişim
+  auth_repository.dart     -> AuthRepository: service'i sarmalar
+  cubit/
+    auth_cubit.dart        -> AuthCubit
+    auth_state.dart        -> AuthInitial, AuthLoading, AuthSuccess, AuthError
+  screens/
+    splash_screen.dart
+    login_screen.dart
+    register_screen.dart
+  widgets/
+    forgot_password_dialog.dart
+```
+
 - Kayıt ve giriş `firebase_auth` paketi ile Email/Password yöntemiyle yapılır.
-- `AuthCubit` (Cubit pattern), `signUp`, `signIn`, `signOut` işlemlerini yönetir; durumlar `AuthInitial`, `AuthLoading`, `AuthSuccess`, `AuthError` olarak modellenmiştir.
-- Firebase'in ham hata mesajları, `lib/utils/auth_error_translator.dart` ile kullanıcıya anlaşılır Türkçe mesajlara çevrilir (ör. "email-already-in-use" -> "Bu e-posta adresi zaten kullanımda.").
-- Uygulama açıldığında `SplashScreen`, `FirebaseAuth` üzerinden oturum durumunu kontrol edip kullanıcıyı Ana Ekran'a veya Giriş ekranına yönlendirir.
-- Kayıt sırasında alınan ad-soyad bilgisi, Firebase Auth'un `displayName` alanı yerine Firestore'daki `users/{userId}` dokümanında saklanır (bkz. veri modeli).
+- `AuthCubit` (`lib/features/auth/cubit/auth_cubit.dart`), `signUp`, `signIn`, `signOut` işlemlerini yönetir; durumlar `auth_state.dart` içinde sealed class ile `AuthInitial`, `AuthLoading`, `AuthSuccess`, `AuthError` olarak modellenmiştir. Cubit ayrıca şifre sıfırlama e-postası, yeniden kimlik doğrulama, e-posta/şifre güncelleme, e-posta doğrulama ve hesap silme çağrılarını `AuthRepository`'ye iletir.
+- Firebase'in ham hata mesajları, `lib/core/utils/auth_error_translator.dart` ile kullanıcıya anlaşılır Türkçe mesajlara çevrilir (ör. "email-already-in-use" -> "Bu e-posta adresi zaten kullanımda.").
+- Uygulama `/splash` rotasıyla açılır (`lib/app/app_router.dart`); `SplashScreen`, `FirebaseAuth` üzerinden oturum durumunu kontrol edip kullanıcıyı Ana Ekran'a (`/home`) veya Giriş ekranına (`/login`) yönlendirir.
+- "Şifremi unuttum" diyaloğu `lib/features/auth/widgets/forgot_password_dialog.dart` içindedir; şifre değiştirme, profil düzenleme ve hesap silme akışları profil ekranında (`lib/features/profile/`) yer alır ve `AuthCubit`'i kullanır.
+- Kayıt sırasında alınan ad-soyad bilgisi, Firebase Auth'un `displayName` alanı yerine Firestore'daki `users/{userId}` dokümanında saklanır (bkz. veri modeli); bu işlem `lib/features/profile/user_repository.dart` üzerinden yapılır.
 
 ## Firestore Veri Modeli ve Güvenlik
 
@@ -71,9 +92,20 @@ Her doküman, doküman ID'si kullanıcının uid'si olacak şekilde tek bir kull
 
 ```
 users/{userId}
-  name: string
-  monthlyBudget: number
+  name: string                 -> ad-soyad
+  monthlyBudget: number        -> aylık toplam bütçe (TL)
+  categoryBudgets: map         -> kategori adı -> o kategorinin aylık limiti (TL)
+    Yemek: number
+    Market: number
+    ...
 ```
+
+- `name` alanını `lib/features/profile/user_service.dart` yazar ve okur.
+- `monthlyBudget` ve `categoryBudgets` birlikte bütçe planını oluşturur; uygulamada `BudgetPlan` modeline (`lib/features/budget/budget_plan.dart`) karşılık gelir: `monthlyBudget` -> `BudgetPlan.monthly`, `categoryBudgets` -> `BudgetPlan.categoryLimits`.
+- `categoryBudgets` içinde yalnızca limiti olan kategoriler bulunur; limiti kaldırılan (0 girilen) kategori map'ten silinir. Okurken 0 veya sayı olmayan değerler yok sayılır, alanlar hiç yoksa plan boş kabul edilir (aylık bütçe 0, limit yok).
+- Kural: kategori limitlerinin toplamı aylık bütçeyi aşamaz. Bu kural uygulama tarafında `BudgetPlan.isValid` ile denetlenir; geçersiz plan kaydedilemez.
+- Plan `lib/features/budget/budget_service.dart` içinde `SetOptions(mergeFields: ['monthlyBudget', 'categoryBudgets'])` ile yazılır: bu iki alan tamamen değiştirilir, `name` gibi diğer alanlara dokunulmaz.
+- Hesap silindiğinde kullanıcının `users/{userId}` dokümanı ve tüm `expenses` dokümanları da silinir.
 
 ### Security Rules
 
@@ -134,44 +166,86 @@ Sayfa yönlendirmeleri tamamen go_router ile yapılır. Harcama Ekle ekranı, bo
 
 ## Klasör Yapısı
 
+Proje "feature-first" düzendedir: her özellik kendi ekranını, widget'larını, cubit'ini, repository'sini, service'ini ve modelini kendi klasöründe tutar. Birden fazla özelliğin kullandığı kod `core/`, uygulama kurulumu `app/` altındadır.
+
 ```
 lib/
-  main.dart
-  firebase_options.dart
+  main.dart                  -> sadece main(): Firebase + tarih yerelleştirmesi
+  firebase_options.dart      -> flutterfire configure üretir (repoda yer almaz)
 
-  models/              -> Expense, CategoryData, TransactionData, ExchangeRate
-  services/             -> FirestoreService, FirebaseAuthService, BudgetService,
-                           UserService, ExchangeRateService
-  repositories/         -> ExpenseRepository, AuthRepository, BudgetRepository,
-                           UserRepository, ExchangeRateRepository
-  blocs/
-    auth/
-    expense/
-    budget/
-    exchange_rate/
-    theme/
-
-  screens/
-    auth/             -> login_screen, register_screen
-    splash_screen.dart
+  app/
+    app.dart                 -> MyApp: global Cubit'ler, tema, MaterialApp.router
+    app_router.dart          -> go_router rota tanımları
     main_shell.dart          -> BottomNavigationBar + IndexedStack + FAB
-    home_screen.dart
-    expense_add_screen.dart  -> hem ekleme hem düzenleme modu
-    expense_list_screen.dart
-    category_detail_screen.dart
-    statistics_screen.dart
-    exchange_rates_screen.dart
-    profile_screen.dart
 
-  widgets/              -> AppTextField, AppGradientButton, CategoryCard, TransactionTile
-  theme/                -> app_theme.dart (açık/koyu renk paleti)
-  utils/                -> CategoryStyles (kategori-ikon/renk eşleştirmesi),
-                           auth_error_translator
-  routes/               -> app_router.dart
+  core/
+    theme/                   -> app_theme.dart (açık/koyu renk paleti), theme_cubit.dart
+    utils/                   -> category_style.dart (kategori-ikon/renk eşleştirmesi),
+                                auth_error_translator.dart
+    models/                  -> category_data.dart, transaction_data.dart
+    widgets/                 -> app_text_field, app_gradient_button, app_snackbar,
+                                app_confirm_dialog, app_back_header,
+                                category_card, transaction_tile
 
-test/
-  models/               -> expense_test.dart
-  utils/                -> category_style_test.dart, auth_error_translator_test.dart
+  features/
+    auth/
+      auth_service.dart, auth_repository.dart
+      cubit/                 -> auth_cubit, auth_state
+      screens/               -> splash_screen, login_screen, register_screen
+      widgets/               -> forgot_password_dialog
+
+    home/
+      home_screen.dart
+      widgets/               -> greeting_header, balance_card, category_summary_row,
+                                recent_expenses_section
+
+    expenses/
+      expense.dart           -> Expense modeli
+      expense_transaction_data.dart  -> Expense -> TransactionData dönüşümü
+      firestore_service.dart, expense_repository.dart
+      cubit/                 -> expense_cubit, expense_state
+      screens/               -> expense_list_screen,
+                                expense_add_screen (hem ekleme hem düzenleme modu)
+      widgets/               -> expense_list_header, expense_filter_bar,
+                                expense_filter_sheet, option_picker_sheet,
+                                grouped_expense_list, amount_card,
+                                category_picker_grid, date_field
+
+    budget/
+      budget_plan.dart       -> BudgetPlan modeli
+      budget_formatters.dart
+      budget_service.dart, budget_repository.dart
+      cubit/                 -> budget_cubit, budget_state,
+                                budget_plan_cubit, budget_plan_state
+      screens/               -> budget_plan_screen, category_detail_screen
+      widgets/               -> monthly_budget_card, budget_info_box,
+                                category_limit_row, amount_input_dialog
+
+    statistics/
+      statistics_screen.dart
+      widgets/               -> category_distribution_card, six_month_chart_card,
+                                top_category_card, daily_average_card
+
+    profile/
+      profile_screen.dart
+      user_service.dart, user_repository.dart
+      widgets/               -> profile_header_card, profile_stats_row, settings_row,
+                                logout_button, edit_profile_dialog,
+                                change_password_dialog, password_confirm_dialog,
+                                theme_picker_sheet
+
+    exchange_rates/
+      exchange_rates_screen.dart
+      currency_info.dart
+      exchange_rate_service.dart, exchange_rate_repository.dart
+      cubit/                 -> exchange_rate_cubit, exchange_rate_state
+      widgets/               -> quick_converter, rate_tile
+
+test/                        -> lib/ yapısını yansıtır
+  core/utils/                -> auth_error_translator_test.dart, category_style_test.dart
+  features/
+    expenses/                -> expense_test.dart
+    budget/                  -> budget_plan_test.dart
 ```
 
 ## Kullanılan Paketler
@@ -210,10 +284,16 @@ flutter test
 
 ## Testler
 
-test/ klasöründe, Firebase/widget kurulumu gerektirmeyen unit testler bulunur:
-- Expense.toMap() / Expense.fromMap() dönüşümlerinin doğruluğu
-- CategoryStyles.of() eşleştirmesi ve bilinmeyen kategori için varsayılan davranış
-- Auth hata kodlarının doğru Türkçe mesaja çevrilmesi
+test/ klasörü lib/ ile aynı düzeni izler ve Firebase/widget kurulumu gerektirmeyen unit testler içerir (4 dosya, 16 test):
+
+| Test dosyası | Test edilen kod | Kapsam |
+|---|---|---|
+| `test/features/expenses/expense_test.dart` | `lib/features/expenses/expense.dart` | `Expense.toMap()` / `Expense.fromMap()` dönüşümleri, `currency` eksikse varsayılan TRY |
+| `test/features/budget/budget_plan_test.dart` | `lib/features/budget/budget_plan.dart` | `BudgetPlan`: dağıtılan/boşta tutar, `maxFor`, limit aşımında geçersizlik, `withLimit`, `fromMap`'in hatalı veride güvenli çalışması, eşitlik |
+| `test/core/utils/category_style_test.dart` | `lib/core/utils/category_style.dart` | `CategoryStyles.of()` eşleştirmesi ve bilinmeyen kategoride "Diğer" stiline düşme |
+| `test/core/utils/auth_error_translator_test.dart` | `lib/core/utils/auth_error_translator.dart` | Auth hata kodlarının doğru Türkçe mesaja çevrilmesi, bilinmeyen hatalarda genel mesaj |
+
+Tüm testleri çalıştırmak için `flutter test`, tek bir dosya için örneğin `flutter test test/features/budget/budget_plan_test.dart`.
 
 ## Ekran Görüntüleri
 
